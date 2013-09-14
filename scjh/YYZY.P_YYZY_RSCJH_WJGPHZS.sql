@@ -1,18 +1,21 @@
---drop PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS;
-SET SCHEMA = ETLUSR;
-SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,ETLUSR;
 
-CREATE PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS 
-( 
-  IP_STARTDATE date
-)
-  SPECIFIC PROC_YYZY_RSCJH_WJGPHZS
+drop PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS;
+SET SCHEMA YYZYUSR ;
+
+SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,SYSIBMADM,YYZYUSR;
+
+CREATE PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
+ (IN IP_STARTDATE DATE
+ ) 
+  SPECIFIC YYZY.PROC_YYZY_RSCJH_WJGPHZS
   LANGUAGE SQL
   NOT DETERMINISTIC
-  NO EXTERNAL ACTION
-  MODIFIES SQL DATA
   CALLED ON NULL INPUT
-LB_MAIN:
+  NO EXTERNAL ACTION
+  OLD SAVEPOINT LEVEL
+  MODIFIES SQL DATA
+  INHERIT SPECIAL REGISTERS
+  LB_MAIN:
 BEGIN ATOMIC
   /* DECLARE SYSTEM VARIABLES */
   DECLARE SQLSTATE CHAR(5); 
@@ -57,11 +60,11 @@ BEGIN ATOMIC
   DECLARE GLOBAL TEMPORARY TABLE t_yyzy_rscjhb_whb like yyzy.t_yyzy_rscjhb_whb with replace on commit preserve rows not logged;
   
   /* SQL PROCEDURE BODY */
-  delete from session.tb_yscjh_wjg;
-  delete from session.t_yyzy_rscjhb_whb;
+  delete from session1.tb_yscjh_wjg;
+  delete from session1.t_yyzy_rscjhb_whb;
 -----------------------------------------------------------------------------------
   --外加工月计划获取
-  insert into session.tb_yscjh_wjg(pfphdm, jhnf, jhyf, jhcl)
+  insert into session1.tb_yscjh_wjg(pfphdm, jhnf, jhyf, jhcl)
   WITH tb_PPGG AS (
     select PPGGID, JHNF,CJMC,CJDM,PPMC,PPDM,YHBS,JYGG,CZR ,BBH,BBRQ, pfphdm
     from DIM.T_DIM_YYZY_WJGPPGG
@@ -88,63 +91,97 @@ BEGIN ATOMIC
     and m.jhyf>=month(IP_STARTDATE)
   ;
   
-  update session.tb_yscjh_wjg
+  update session1.tb_yscjh_wjg
   set yksrq = date(to_date(char(jhnf*100*100+jhyf*100+1),'YYYYMMDD'))
   ;
-  update session.tb_yscjh_wjg
+  update session1.tb_yscjh_wjg
   set yjsrq = yksrq + 1 month - 1 day
   ;
-  update session.tb_yscjh_wjg
+  update session1.tb_yscjh_wjg
   set jhcl_avg = jhcl*1.000000/(days(yjsrq)-days(yksrq)+1)
   ;
   
-  --指定月份中增加外加工烟叶制丝计划
-  insert into session.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
-  with tb_clksrq as (
-    select m.pfphdm,m.ksrq,y.yksrq-1 day as jsrq, m.jhcl_avg,m.jhpc_avg 
-    from yyzy.t_yyzy_rscjhb_whb as m
-      inner join session.tb_yscjh_wjg as y 
-        on m.pfphdm = y.pfphdm and (y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
-    union all
-    select m.pfphdm,y.yksrq as ksrq,m.jsrq, m.jhcl_avg+value(y.jhcl_avg,0) as jhcl_avg,m.jhpc_avg 
-    from yyzy.t_yyzy_rscjhb_whb as m
-      inner join session.tb_yscjh_wjg as y 
-        on m.pfphdm = y.pfphdm and (y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
-    union all
-    select m.pfphdm,m.ksrq,m.jsrq, m.jhcl_avg,m.jhpc_avg 
-    from yyzy.t_yyzy_rscjhb_whb as m
-      inner join session.tb_yscjh_wjg as y 
-        on m.pfphdm = y.pfphdm and not(y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
-  )
-  , tb_cljsrq as (
-    select m.pfphdm, m.ksrq, y.yjsrq as jsrq, m.jhcl_avg+value(y.jhcl_avg,0) as jhcl_avg, m.jhpc_avg
-    from tb_clksrq as m
-    inner join session.tb_yscjh_wjg as y 
-      on m.pfphdm = y.pfphdm and (y.yjsrq >= m.ksrq and y.yjsrq < m.jsrq)
-    union all
-    select m.pfphdm, y.yjsrq+1 day as ksrq, m.jsrq, m.jhcl_avg, m.jhpc_avg
-    from tb_clksrq as m
-    inner join session.tb_yscjh_wjg as y 
-      on m.pfphdm = y.pfphdm and (y.yjsrq >= m.ksrq and y.yjsrq < m.jsrq)
-    union all
-    select m.pfphdm, m.ksrq, m.jsrq, m.jhcl_avg, m.jhpc_avg
-    from tb_clksrq as m
-    inner join session.tb_yscjh_wjg as y 
-      on m.pfphdm = y.pfphdm and not(y.yjsrq >= m.ksrq and y.yjsrq < m.jsrq)
-  )
-  select pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg
-  from tb_cljsrq 
-  order by 1,2,3 
-  ;
-  
-  --入目标表
-  delete from yyzy.t_yyzy_rscjhb_whb as e where exists (select 1 from session.t_yyzy_rscjhb_whb where pfphdm = e.pfphdm);
-  insert into yyzy.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
-  select pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg
-  from session.t_yyzy_rscjhb_whb;
+  lp1:
+  for v1 as c1 cursor for
+    select pfphdm, jhnf, jhyf, yksrq, yjsrq, jhcl_avg
+    from session1.tb_yscjh_wjg
+    order by jhnf, jhyf
+  do
+    --指定月份中增加外加工烟叶制丝计划
+    delete from session1.t_yyzy_rscjhb_whb;
+    insert into session1.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
+    with 
+    tb_yscjh_wjg as (
+      select *
+      from session1.tb_yscjh_wjg
+      where pfphdm = v1.pfphdm and jhnf = v1.jhnf and jhyf = v1.jhyf
+    )
+    ,tb_clksrq as (
+      select m.pfphdm,m.ksrq,y.yksrq-1 day as jsrq, m.jhcl_avg,m.jhpc_avg 
+      from yyzy.t_yyzy_rscjhb_whb as m
+        inner join tb_yscjh_wjg as y 
+          on m.pfphdm = y.pfphdm and (y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
+      union all
+      select m.pfphdm,y.yksrq as ksrq,m.jsrq, m.jhcl_avg as jhcl_avg,m.jhpc_avg 
+      from yyzy.t_yyzy_rscjhb_whb as m
+        inner join tb_yscjh_wjg as y 
+          on m.pfphdm = y.pfphdm and (y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
+      union all
+      select m.pfphdm,m.ksrq,m.jsrq, m.jhcl_avg,m.jhpc_avg 
+      from yyzy.t_yyzy_rscjhb_whb as m
+        inner join tb_yscjh_wjg as y 
+          on m.pfphdm = y.pfphdm and not(y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
+    )
+    , tb_cljsrq as (
+      select m.pfphdm, m.ksrq, y.yjsrq as jsrq, m.jhcl_avg as jhcl_avg, m.jhpc_avg
+      from tb_clksrq as m
+      inner join tb_yscjh_wjg as y 
+        on m.pfphdm = y.pfphdm and (y.yjsrq >= m.ksrq and y.yjsrq < m.jsrq)
+      union all
+      select m.pfphdm, y.yjsrq+1 day as ksrq, m.jsrq, m.jhcl_avg, m.jhpc_avg
+      from tb_clksrq as m
+      inner join tb_yscjh_wjg as y 
+        on m.pfphdm = y.pfphdm and (y.yjsrq >= m.ksrq and y.yjsrq < m.jsrq)
+      union all
+      select m.pfphdm, m.ksrq, m.jsrq, m.jhcl_avg, m.jhpc_avg
+      from tb_clksrq as m
+      inner join tb_yscjh_wjg as y 
+        on m.pfphdm = y.pfphdm and not(y.yjsrq >= m.ksrq and y.yjsrq < m.jsrq)
+    )
+    select m.pfphdm, m.ksrq, m.jsrq, m.jhcl_avg+value(y.jhcl_avg,0) as jhcl_avg, jhpc_avg
+    from tb_cljsrq as m
+      left join tb_yscjh_wjg as y
+        on m.pfphdm = y.pfphdm and (m.ksrq<=y.yjsrq and y.yksrq<=m.jsrq)
+    order by 1,2,3 
+    ;
+    
+    --入目标表
+    delete from yyzy.t_yyzy_rscjhb_whb as e where exists (select 1 from session1.t_yyzy_rscjhb_whb where pfphdm = e.pfphdm);
+    insert into yyzy.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
+    select pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg
+    from session1.t_yyzy_rscjhb_whb;
+
+  end for lp1;
   
 END LB_MAIN;
 
-COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS(date) IS '日生产计划 外加工牌号制丝';
+COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
+ (DATE
+ ) 
+  IS '日生产计划 外加工牌号制丝';
 
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS (date) TO USER APPUSR;
+GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
+ (DATE
+ ) 
+  TO USER APPUSR;
+
+GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
+ (DATE
+ ) 
+  TO USER DB2INST2 WITH GRANT OPTION;
+
+GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
+ (DATE
+ ) 
+  TO USER ETLUSR WITH GRANT OPTION;
+
