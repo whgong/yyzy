@@ -224,6 +224,87 @@ BEGIN ATOMIC
   group by date(tlsj),m.pfphdm,jsdm
   ;
   
+  lp1:
+  for v1 as c1 cursor for 
+    select distinct pfphdm 
+    from YYZY.T_YYZY_ZXPF_SDB 
+  do 
+    --step1:计算ksrq,jsrq
+    set lc_d_tlksrq = (select date(max(ZDTLSJ))+1 day as ksrq 
+                        from YYZY.T_YYZY_SJTL_SCPC_RZJL 
+                        where pfphdm = v1.pfphdm and date(GXSJ)<IP_PFZXRQ+1 day
+                      )
+    ;
+    set lc_d_tljsrq = (select date(max(ZDTLSJ)) as jsrq 
+                        from YYZY.T_YYZY_SJTL_SCPC_RZJL 
+                        where pfphdm = v1.pfphdm and date(GXSJ)=IP_PFZXRQ+1 day
+                      )
+    ;
+--    set lc_d_tljsrq = IP_PFZXRQ;
+
+    lp2:
+    for v2 as c2 cursor for 
+      select distinct jsdm
+      from YYZY.T_YYZY_ZXPF_SDB
+      where pfphdm = v1.pfphdm
+    do 
+      delete from YYZY.T_YYZY_RSCJH_LSB where pfphdm = v1.pfphdm and jhrq>=lc_d_tlksrq;
+      insert into YYZY.T_YYZY_RSCJH_LSB(PFPHDM, JHRQ, JHCL, JHPC, BBRQ)
+      select v1.pfphdm, riqi as jhrq, 
+        value(case when dpcl is null then phscpc else phscpc*dpcl end,0) as jhcl ,
+        value(phscpc,0) as jhpc ,
+        current_date as bbrq
+      from DIM.T_DIM_YYZY_DATE as m
+        left join (
+            select date(tlsj) as tlrq,pfphdm,phscpc 
+            from YYZY.T_YYZY_SJTL_SCPC 
+            where pfphdm = v1.pfphdm
+          ) as t
+          on tlrq = m.riqi
+        left join (
+            select PFPHDM,DPCL
+            from YYZY.T_YYZY_DPCLB
+            where (pfphdm, nf*100+yf)in(
+                select pfphdm, max(nf*100+yf) 
+                from YYZY.T_YYZY_DPCLB group by pfphdm
+              )
+          ) as d
+          on t.pfphdm = d.pfphdm
+      where riqi between lc_d_tlksrq and IP_PFZXRQ
+        and v1.pfphdm<>16
+      ;
+      
+      if lc_d_tljsrq<lc_d_tlksrq or lc_d_tljsrq is null then --若当天没有新增投料记录
+  --      ITERATE lp1; --跳过该配方牌号的处理
+        set lc_n_tlsl = 0;
+      else
+        --step2:计算投料烟叶数量
+        set lc_n_tlsl = value(
+            (select sum(tlsl) 
+              from session.t_yyzy_sjtll 
+              where pfphdm = v1.pfphdm 
+                and jsdm = v2.jsdm 
+                and rq between lc_d_tlksrq and lc_d_tljsrq 
+            )
+            ,0
+          )
+        ;
+      end if;
+  --    if lc_n_tlsl = 0 then --若投料烟叶数量为0
+  --      ITERATE lp1; --跳过该配方牌号、角色的处理
+  --    end if;
+  --    set lc_d_tljsrq = IP_PFZXRQ;
+  --    if lc_d_tljsrq<lc_d_tlksrq or lc_d_tljsrq is null then --若当天没有新增投料记录
+  --      set lc_n_tlsl = 0;
+  --      ITERATE lp1; --跳过该配方牌号的处理
+  --    end if;
+      call YYZY.P_YYZY_LSPF6PHJS(lc_d_tlksrq, IP_PFZXRQ, v1.pfphdm, v2.jsdm, lc_n_tlsl);
+    
+    end for lp2;
+    
+  end for lp1;
+  
+  /*
   open c1;
   lp1:loop
     set SQL_CUR_AT_END = 0;
@@ -269,7 +350,7 @@ BEGIN ATOMIC
     call YYZY.P_YYZY_LSPF6PHJS(lc_d_tlksrq, IP_PFZXRQ, lc_i_pfphdm, lc_i_jsdm, lc_n_tlsl);
     
   end loop lp1; 
-  close c1; 
+  close c1; */
   
 END LB_MAIN;
 
