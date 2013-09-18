@@ -155,3 +155,15 @@ Public Function dbiz_supplyTobacco(ByRef tbco As clsFormulaTobacco, pc As Intege
     
 End Function
 
+
+'月计划批次、领料情况处理
+Public Function dbiz_prodPlan()
+    
+    Dim fmtc As Collection
+    
+    Set fmtc = gdGetFormulaTable
+    
+    dorg_prodPlan fmtc
+    
+End Function
+

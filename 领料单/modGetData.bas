@@ -19,8 +19,8 @@ Public Function gdPfphList() As Collection
         
     Next i
     
-    If modGlobalVar.pfphList Is Nothing Then
-        Set modGlobalVar.pfphList = reslist
+    If modGlobalVar.pfphlist Is Nothing Then
+        Set modGlobalVar.pfphlist = reslist
     End If
     
     Set gdPfphList = reslist
@@ -92,6 +92,7 @@ End Function
 
 '获取一个牌号的配方表
 Public Function gdGetOneFormulaTable(ByVal ph As String) As clsFormulaTable
+    Dim r As Integer, c As Integer
     
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Worksheets(ph)
@@ -100,7 +101,10 @@ Public Function gdGetOneFormulaTable(ByVal ph As String) As clsFormulaTable
     
     Dim cel As Range
     
-    tmpstr = ws.Cells(2, 2).Value
+    r = modGlobalVar.wsp_r1
+    c = modGlobalVar.wsp_c1
+    
+    tmpstr = ws.Cells(r, c).Value
     
     res.pfph = ph
     
@@ -119,14 +123,14 @@ Public Function gdGetOneFormulaTable(ByVal ph As String) As clsFormulaTable
             'res.zpc = rmc(3)
         End If
     Else
-        ws.Cells(2, 2).Activate
+        ws.Cells(r, c).Activate
         MsgBox "不符合规则的配方单"
     End If
     
-    Set cel = ws.Cells(3, 2)
+    Set cel = ws.Cells(r + 1, c)
     Do
         res.addOneBomb gdGetOneFormulaBomb(cel)
-        Set cel = ws.Cells(3, cel.Column + 3)
+        Set cel = ws.Cells(r + 1, cel.Column + 3)
     Loop While cel.Value <> ""
     
     res.zpc = res.jspc - res.qspc + 1
@@ -143,7 +147,7 @@ Public Function gdGetFormulaTable() As Collection
     Dim phlist As Collection
     Set phlist = gdPfphList()
     
-    For Each ph In modGlobalVar.pfphList
+    For Each ph In modGlobalVar.pfphlist
         reslist.Add Item:=gdGetOneFormulaTable(ph), Key:=ph
     Next
     
@@ -161,18 +165,20 @@ End Function
 
 '获取单个配方的投料批次
 Public Function gdGetOneFormulaProdNum(ByRef cel As Range, da As Integer, pfph As String) As clsFormulaProdNum
-
+    Dim r As Integer, c As Integer, py As Integer
     Dim pnum As New clsFormulaProdNum
     
     Dim i As Integer
-    
+    r = modGlobalVar.ws1_r3
+    c = modGlobalVar.ws1_c3
+    py = modGlobalVar.ws1_c3 - modGlobalVar.ws1_c1
     pnum.pfph = pfph
-    For i = 1 To da
+    For i = py To da + py
         
         If (cel.Offset(0, i).Value < 0) Then
             MsgBox pnum.pfph & "的生产批次为负数，存在异常！！！"
         End If
-        pnum.addProdNum i, cel.Offset(0, i).Value
+        pnum.addProdNum (i - py + 1), cel.Offset(0, i).Value
         
     Next i
     
@@ -182,25 +188,27 @@ End Function
 
 '获取各配方的投料批次集合
 Public Function gdGetFormulaProdNum(da As Integer) As Collection
-
+    Dim r As Integer, c As Integer
     Dim res As New Collection
     Dim ws As Worksheet
     Dim i As Integer
     
     Set ws = ThisWorkbook.Worksheets("日投料批次")
-    
-    i = 5
+    r = modGlobalVar.ws1_r1
+    c = modGlobalVar.ws1_c1
+    i = r
     Do
-        res.Add Item:=gdGetOneFormulaProdNum(ws.Cells(i, 1), da, ws.Cells(i, 1).Value), Key:=ws.Cells(i, 1)
+        res.Add Item:=gdGetOneFormulaProdNum(ws.Cells(i, c), da, ws.Cells(i, c).Value), Key:=ws.Cells(i, c)
         i = i + 1
-    Loop While ws.Cells(i, 1).Value <> ""
+    Loop While ws.Cells(i, c).Value <> ""
     
     Set gdGetFormulaProdNum = res
 
 End Function
 
-Public Sub test()
-    gdGetOneFormulaTable ("2#膨丝")
-    MsgBox "test"
+'Public Sub test()
+'    gdGetOneFormulaTable ("2#膨丝")
+'    MsgBox "test"
+'
+'End Sub
 
-End Sub

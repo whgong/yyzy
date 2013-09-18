@@ -15,7 +15,7 @@ Private Sub Worksheet_FollowHyperlink(ByVal Target As Hyperlink)
     If Target.Range.Value = "计算" Then
         '获得计算的日期
         col = Target.Range.Column
-        col = col - 1
+        col = col - 3
         '调用计算逻辑
         modAction.computeSupplyList_Action col
         
