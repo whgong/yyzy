@@ -53,25 +53,25 @@ BEGIN ATOMIC
 --  END; 
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET SQL_CUR_AT_END=1;
   /* DECLARE TEMPORARY TABLE */
-  --Åä·½ÅÆºÅÁĞ±íÁÙÊ±±í
+  --é…æ–¹ç‰Œå·åˆ—è¡¨ä¸´æ—¶è¡¨
   DECLARE GLOBAL TEMPORARY TABLE tb_pfphlb
   (
     pfphdm integer
   ) with replace on commit preserve rows not logged;
-  --ĞèÃÖ²¹ÊıÁ¿ÁÙÊ±±í
+  --éœ€å¼¥è¡¥æ•°é‡ä¸´æ—¶è¡¨
   DECLARE GLOBAL TEMPORARY TABLE tb_dmbjhs
   (
     pfphdm integer,
     mbpc decimal(18,6)
   ) with replace on commit preserve rows not logged; 
-  --ÔÂ¼Æ»®ÁÙÊ±±í
+  --æœˆè®¡åˆ’ä¸´æ—¶è¡¨
   DECLARE GLOBAL TEMPORARY TABLE tb_yscjh
   (
     pfphdm integer,
     jhpc decimal(18,6)
   ) with replace on commit preserve rows not logged; 
   DECLARE GLOBAL TEMPORARY TABLE T_YYZY_RSCJHB_WHB like YYZY.T_YYZY_RSCJHB_WHB with replace on commit preserve rows not logged; 
-  --Íâ¼Ó¹¤ÔÂ¼Æ»®ÁÙÊ±±í
+  --å¤–åŠ å·¥æœˆè®¡åˆ’ä¸´æ—¶è¡¨
   DECLARE GLOBAL TEMPORARY TABLE tb_yscjh_wjg
   (
     pfphdm INTEGER,
@@ -85,14 +85,14 @@ BEGIN ATOMIC
   ; 
 -----------------------------------------------------------------------------------------------------------
   /* SQL PROCEDURE BODY */
-  --¹ı³ÌÖĞÊ¹ÓÃ±äÁ¿¸³Öµ
+  --è¿‡ç¨‹ä¸­ä½¿ç”¨å˜é‡èµ‹å€¼
   set lc_d_rjhksrq = value((select min(ksrq) from YYZY.T_YYZY_RSCJHB_WHB),date('1980-01-01'));
   set lc_i_yjhnf = year(lc_d_rjhksrq);
   set lc_i_yjhyf = month(lc_d_rjhksrq);
   set lc_d_yksrq = date(to_date(char(lc_i_yjhnf*100*100 + lc_i_yjhyf*100 + 1),'YYYYMMDD'));
   set lc_d_yjsrq = lc_d_yksrq + 1 month - 1 day;
 ----------------------------------------------------------------------------------------------------------
-  --Íâ¼Ó¹¤ÔÂ¼Æ»®»ñÈ¡
+  --å¤–åŠ å·¥æœˆè®¡åˆ’è·å–
   delete from session.tb_yscjh_wjg;
   insert into session.tb_yscjh_wjg(pfphdm, jhnf, jhyf, jhcl)
   WITH tb_PPGG AS (
@@ -121,7 +121,7 @@ BEGIN ATOMIC
     and m.jhyf=lc_i_yjhyf
   ;
   
-  --´¦ÀíÔÂÉú²ú¼Æ»®
+  --å¤„ç†æœˆç”Ÿäº§è®¡åˆ’
   delete from session.tb_yscjh;
   insert into session.tb_yscjh(pfphdm,jhpc)
   with tb_yjh_maxbb as 
@@ -151,7 +151,7 @@ BEGIN ATOMIC
     from (
         select pfphdm, jhnf, jhyf, jhcl from tb_yjh_pfph
         union all
-        select pfphdm, jhnf, jhyf, jhcl from session.tb_yscjh_wjg --Íâ¼Ó¹¤ÔÂ¼Æ»®¼Æ»®
+        select pfphdm, jhnf, jhyf, jhcl from session.tb_yscjh_wjg --å¤–åŠ å·¥æœˆè®¡åˆ’è®¡åˆ’
       ) as t
     group by jhnf, jhyf, pfphdm
   )
@@ -171,7 +171,7 @@ BEGIN ATOMIC
   )
   select pfphdm, sum(jhpc) as jhpc
   from tb_yjhpc
-  where jhnf = lc_i_yjhnf and jhyf = lc_i_yjhyf --ÄêÔÂ¹ıÂË
+  where jhnf = lc_i_yjhnf and jhyf = lc_i_yjhyf --å¹´æœˆè¿‡æ»¤
     and pfphdm = IP_PFPHDM 
   group by pfphdm
   ;
@@ -181,7 +181,7 @@ BEGIN ATOMIC
 --                        where date(tlsj) between lc_d_yksrq and lc_d_rjhksrq - 1 day) 
       and IP_PFPHDM in (select pfphdm from YYZY.T_YYZY_TMP_RSCPCB) 
   then
-    --¼ÆËãĞèÒªÃÖ²¹Åú´Î
+    --è®¡ç®—éœ€è¦å¼¥è¡¥æ‰¹æ¬¡
     delete from session.tb_dmbjhs;
     insert into session.tb_dmbjhs(pfphdm, mbpc) 
     with tb_sjtlpc as 
@@ -206,6 +206,7 @@ BEGIN ATOMIC
       select pfphdm, sum(jhpc) as jhpc 
       from YYZY.T_YYZY_TMP_RSCPCB
       where pfphdm = IP_PFPHDM
+        and jhrq between lc_d_yksrq and lc_d_yjsrq --2013-09-18ä¿®æ”¹bug
       group by pfphdm
     )
     , tb_jhsyl as (
@@ -262,7 +263,7 @@ BEGIN ATOMIC
   end if; 
   
   /*
-  --»ñµÃĞèÒªÃÖ²¹µÄÅä·½ÅÆºÅÁĞ±í
+  --è·å¾—éœ€è¦å¼¥è¡¥çš„é…æ–¹ç‰Œå·åˆ—è¡¨
   delete from session.tb_pfphlb;
   insert into session.tb_pfphlb(pfphdm)
   select pfphdm 
@@ -271,7 +272,7 @@ BEGIN ATOMIC
 --  intersect
 --  select pfphdm 
 --  from YYZY.T_YYZY_RSCJHB_WHB 
---  where (ksrq<=lc_d_yjsrq and jsrq>=lc_d_yksrq)  --ÈÕÆÚ¹ıÂË
+--  where (ksrq<=lc_d_yjsrq and jsrq>=lc_d_yksrq)  --æ—¥æœŸè¿‡æ»¤
   intersect
   select pfphdm from session.tb_yscjh
   ;
@@ -319,7 +320,7 @@ BEGIN ATOMIC
   ;
   
   
-  --Êı¾İÈë¿â
+  --æ•°æ®å…¥åº“
   delete from YYZY.T_YYZY_RSCJHB_WHB 
   where pfphdm in (select pfphdm from session.T_YYZY_RSCJHB_WHB)
     and jsrq<=lc_d_yjsrq
@@ -336,6 +337,6 @@ BEGIN ATOMIC
   
 END LB_MAIN;
 
-COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_RJHXZ( integer) IS 'ÈÕÉú²ú¼Æ»®ĞŞÕı';
+COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_RJHXZ( integer) IS 'æ—¥ç”Ÿäº§è®¡åˆ’ä¿®æ­£';
 
 GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_RJHXZ (integer) TO USER APPUSR;
