@@ -1,0 +1,27 @@
+DROP FUNCTION YYZY.F_DPCL; 
+
+SET SCHEMA ETLUSR; 
+SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,SYSIBMADM,ETLUSR; 
+
+CREATE FUNCTION YYZY.F_DPCL 
+( 
+  ip_pfphdm integer 
+) 
+  RETURNS INTEGER 
+  SPECIFIC YYZY.F_DPCL 
+  LANGUAGE SQL 
+  NOT DETERMINISTIC 
+  READS SQL DATA 
+  STATIC DISPATCH 
+  CALLED ON NULL INPUT 
+  NO EXTERNAL ACTION 
+  INHERIT SPECIAL REGISTERS 
+  RETURN 
+    values (
+      SELECT dpcl 
+      FROM YYZY.T_YYZY_DPCLB 
+      WHERE pfphdm = ip_pfphdm 
+      order by nf desc,yf desc 
+      fetch first 1 row only 
+    )
+  ;
