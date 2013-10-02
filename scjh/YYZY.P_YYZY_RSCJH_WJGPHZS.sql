@@ -1,8 +1,8 @@
 
 drop PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS;
-SET SCHEMA YYZYUSR ;
+SET SCHEMA ETLUSR ;
 
-SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,SYSIBMADM,YYZYUSR;
+SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,SYSIBMADM,ETLUSR;
 
 CREATE PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
  (IN IP_STARTDATE DATE
@@ -63,7 +63,7 @@ BEGIN ATOMIC
   delete from session1.tb_yscjh_wjg;
   delete from session1.t_yyzy_rscjhb_whb;
 -----------------------------------------------------------------------------------
-  --Õ‚º”π§‘¬º∆ªÆªÒ»°
+  --Â§ñÂä†Â∑•ÊúàËÆ°ÂàíËé∑Âèñ
   insert into session1.tb_yscjh_wjg(pfphdm, jhnf, jhyf, jhcl)
   WITH tb_PPGG AS (
     select PPGGID, JHNF,CJMC,CJDM,PPMC,PPDM,YHBS,JYGG,CZR ,BBH,BBRQ, pfphdm
@@ -107,7 +107,7 @@ BEGIN ATOMIC
     from session1.tb_yscjh_wjg
     order by jhnf, jhyf
   do
-    --÷∏∂®‘¬∑›÷–‘ˆº”Õ‚º”π§—Ã“∂÷∆Àøº∆ªÆ
+    --ÊåáÂÆöÊúà‰ªΩ‰∏≠Â¢ûÂä†Â§ñÂä†Â∑•ÁÉüÂè∂Âà∂‰∏ùËÆ°Âàí
     delete from session1.t_yyzy_rscjhb_whb;
     insert into session1.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
     with 
@@ -120,17 +120,17 @@ BEGIN ATOMIC
       select m.pfphdm,m.ksrq,y.yksrq-1 day as jsrq, m.jhcl_avg,m.jhpc_avg 
       from yyzy.t_yyzy_rscjhb_whb as m
         inner join tb_yscjh_wjg as y 
-          on m.pfphdm = y.pfphdm and (y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
+          on m.pfphdm = y.pfphdm and (y.yksrq > m.ksrq and y.yksrq <= m.jsrq)
       union all
       select m.pfphdm,y.yksrq as ksrq,m.jsrq, m.jhcl_avg as jhcl_avg,m.jhpc_avg 
       from yyzy.t_yyzy_rscjhb_whb as m
         inner join tb_yscjh_wjg as y 
-          on m.pfphdm = y.pfphdm and (y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
+          on m.pfphdm = y.pfphdm and (y.yksrq > m.ksrq and y.yksrq <= m.jsrq)
       union all
       select m.pfphdm,m.ksrq,m.jsrq, m.jhcl_avg,m.jhpc_avg 
       from yyzy.t_yyzy_rscjhb_whb as m
         inner join tb_yscjh_wjg as y 
-          on m.pfphdm = y.pfphdm and not(y.yksrq < m.ksrq and y.yksrq >= m.jsrq)
+          on m.pfphdm = y.pfphdm and not(y.yksrq > m.ksrq and y.yksrq <= m.jsrq)
     )
     , tb_cljsrq as (
       select m.pfphdm, m.ksrq, y.yjsrq as jsrq, m.jhcl_avg as jhcl_avg, m.jhpc_avg
@@ -155,7 +155,7 @@ BEGIN ATOMIC
     order by 1,2,3 
     ;
     
-    --»Îƒø±Í±Ì
+    --ÂÖ•ÁõÆÊ†áË°®
     delete from yyzy.t_yyzy_rscjhb_whb as e where exists (select 1 from session1.t_yyzy_rscjhb_whb where pfphdm = e.pfphdm);
     insert into yyzy.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
     select pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg
@@ -165,23 +165,4 @@ BEGIN ATOMIC
   
 END LB_MAIN;
 
-COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
- (DATE
- ) 
-  IS '»’…˙≤˙º∆ªÆ Õ‚º”π§≈∆∫≈÷∆Àø';
-
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
- (DATE
- ) 
-  TO USER APPUSR;
-
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
- (DATE
- ) 
-  TO USER DB2INST2 WITH GRANT OPTION;
-
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS
- (DATE
- ) 
-  TO USER ETLUSR WITH GRANT OPTION;
-
+COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_WJGPHZS(DATE) IS 'Êó•Áîü‰∫ßËÆ°Âàí Â§ñÂä†Â∑•ÁâåÂè∑Âà∂‰∏ù';
