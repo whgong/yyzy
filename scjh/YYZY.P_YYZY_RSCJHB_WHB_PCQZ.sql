@@ -1,30 +1,20 @@
-/*
+
 drop table YYZY.T_YYZY_TMP_RSCPCB;
 create table YYZY.T_YYZY_TMP_RSCPCB 
 (
   pfphdm INTEGER,
   jhrq date,
-  jhpc decimal(18,6)
+  jhpc decimal(18,6),
+  jhcl decimal(18,6)
 )
 in ts_reg_16k;
-*/
+
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 SET SCHEMA ETLUSR;
 SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,SYSIBMADM,ETLUSR;
 
 DROP PROCEDURE YYZY.P_YYZY_RSCJHB_PCQZ_DPH;
-/*
---drop FUNCTION MATH.F_QZBS;
-
-CREATE FUNCTION  MATH.F_QZBS ( val DOUBLE )
-  RETURNS DOUBLE
-  LANGUAGE SQL
-  NOT DETERMINISTIC
-  NO EXTERNAL ACTION
-  CONTAINS SQL
-RETURN (case when val is null then cast(null as double) when val<>int(val) then int(val+1) - val else 0 end);
-*/
 
 create PROCEDURE YYZY.P_YYZY_RSCJHB_PCQZ_DPH(
   ip_pfphdm integer,
@@ -38,12 +28,14 @@ create PROCEDURE YYZY.P_YYZY_RSCJHB_PCQZ_DPH(
   OLD SAVEPOINT LEVEL
   MODIFIES SQL DATA
   INHERIT SPECIAL REGISTERS
-lbmain : BEGIN
+lbmain : 
+BEGIN
   /*------------------------------------declare---------------------------------------*/
   declare lc_d_bsd decimal(18,2);
   declare lc_i_flg1 integer; 
   declare lc_i_tot,lc_i_min, lc_i_ys, lc_i_ts integer; 
   declare lc_i_tmpval,lc_i_tmpys decimal(18,6);
+  declare lc_i_dpcl decimal(18,6);
   
   DECLARE GLOBAL TEMPORARY TABLE scjh_r1(
     pfphdm INTEGER,
@@ -63,10 +55,11 @@ lbmain : BEGIN
   ) with replace on commit preserve rows not logged; 
   
   /*------------------------------------proc body---------------------------------------*/
+  --Ê∏ÖÁêÜ‰∏¥Êó∂Ë°®Êï∞ÊçÆ
   delete from session.scjh_r1;
   delete from YYZY.T_YYZY_TMP_RSCPCB;
-  
-  -- Ã¯π˝π£≈‰∑Ω∫ÕŒﬁµ•≈˙≤˙¡ø≈∆∫≈µƒ¥¶¿Ì 
+-----------------------------------------------------------------------------------------------
+  -- Ë∑≥ËøáÊ¢óÈÖçÊñπÂíåÊó†ÂçïÊâπ‰∫ßÈáèÁâåÂè∑ÁöÑÂ§ÑÁêÜ 
   if ip_pfphdm not in (
         SELECT PFPHDM FROM YYZY.T_YYZY_DPCLB as C
         WHERE (PFPHDM,NY) IN (SELECT PFPHDM, MAX(NY) FROM YYZY.T_YYZY_DPCLB  GROUP BY PFPHDM)
@@ -75,12 +68,19 @@ lbmain : BEGIN
   then
     leave lbmain;
   end if;
----------------------------------------------------------------------------------------
-  -- ¥¶¿Ì÷∏∂®≈∆∫≈µƒæÌΩ”∞¸º∆ªÆ 
+-----------------------------------------------------------------------------------------------
+  --ËÆ°ÁÆóÁâåÂè∑ÁöÑÂçïÊâπ‰∫ßÈáè
+  set lc_i_dpcl = cast(null as integer);
+  set lc_i_dpcl = YYZY.F_DPCL(ip_pfphdm);
+  if lc_i_dpcl is null then
+    leave lbmain;
+  end if;
+-----------------------------------------------------------------------------------------------
+  -- Â§ÑÁêÜÊåáÂÆöÁâåÂè∑ÁöÑÂç∑Êé•ÂåÖËÆ°Âàí 
   if ip_pfphdm in (select pfphdm from DIM.T_DIM_YYZY_PFPH_PHCF where sccjdm in (1,2)) then 
     delete from YYZY.T_YYZY_TMP_RSCPCB;
-    insert into YYZY.T_YYZY_TMP_RSCPCB(pfphdm, jhrq, jhpc)
-    select PFPHDM, riqi as jhrq, JHPC_AVG
+    insert into YYZY.T_YYZY_TMP_RSCPCB(pfphdm, jhrq, jhpc, jhcl)
+    select PFPHDM, riqi as jhrq, JHPC_AVG, jhcl_avg
     from YYZY.T_YYZY_RSCJHB_WHB as m
       inner join DIM.T_DIM_YYZY_DATE as d 
         on d.riqi between m.ksrq and m.jsrq 
@@ -89,7 +89,7 @@ lbmain : BEGIN
     order by JHPC_AVG desc
     ;
     
-    lp1:    --¬÷—Øº∆ªÆ‘¬∑›
+    lp1:    --ËΩÆËØ¢ËÆ°ÂàíÊúà‰ªΩ
     for v1 as c1 cursor for 
         select min(jhrq) as ksrq, max(jhrq) as jsrq 
         from YYZY.T_YYZY_TMP_RSCPCB 
@@ -97,44 +97,51 @@ lbmain : BEGIN
         order by 1,2
     do 
       set lc_d_bsd = 0;
-      lp2:  --¬÷—Ø»’º∆ªÆ
+      lp2:  --ËΩÆËØ¢Êó•ËÆ°Âàí
       for v2 as c2 cursor for 
-          select jhpc 
+          select jhcl 
           from YYZY.T_YYZY_TMP_RSCPCB 
           where jhrq between v1.ksrq and v1.jsrq 
           order by jhrq 
-          FOR UPDATE OF JHPC
+          FOR UPDATE OF jhcl
       do
-        if v2.jhpc<>0 and v2.jhpc>=lc_d_bsd then    --µ±ÃÏµƒ ˝¡ø◊„πªµ÷œ˚«∞“ªÃÏ»±ø⁄
-          update YYZY.T_YYZY_TMP_RSCPCB                   --–ﬁ’˝µ±ÃÏµƒ≈˙¥Œ ˝
-          set jhpc = jhpc - lc_d_bsd
-          where current of c2
-          ;
-          --œÚ…œΩ¯Œª
-          set lc_d_bsd = round(MATH.F_QZBS(jhpc - lc_d_bsd),2); 
-          update YYZY.T_YYZY_TMP_RSCPCB 
-          set jhpc = jhpc + lc_d_bsd 
+        if v2.jhcl<>0 and v2.jhcl>=lc_d_bsd then    --ÂΩìÂ§©ÁöÑÊï∞ÈáèË∂≥Â§üÊäµÊ∂àÂâç‰∏ÄÂ§©Áº∫Âè£
+          update YYZY.T_YYZY_TMP_RSCPCB                   --‰øÆÊ≠£ÂΩìÂ§©ÁöÑÊâπÊ¨°Êï∞
+          set jhcl = jhcl - lc_d_bsd 
           where current of c2 
           ; 
-        elseif v2.jhpc<>0 and v2.jhpc<lc_d_bsd then   --≤ªπªµ÷œ˚«∞“ªÃÏµƒ»±ø⁄
+          --Âêë‰∏äËøõ‰Ωç
+          set lc_d_bsd = round(MATH.F_XSQZ(v2.jhcl-lc_d_bsd, lc_i_dpcl) - (v2.jhcl-lc_d_bsd), 2);
           update YYZY.T_YYZY_TMP_RSCPCB 
-          set jhpc = 0 
+          set jhcl = MATH.F_XSQZ(jhcl,lc_i_dpcl) 
+          where current of c2 
+          ; 
+        elseif v2.jhcl<>0 and v2.jhcl<lc_d_bsd then   --‰∏çÂ§üÊäµÊ∂àÂâç‰∏ÄÂ§©ÁöÑÁº∫Âè£
+          update YYZY.T_YYZY_TMP_RSCPCB 
+          set jhcl = 0 
           where current of c2 
           ;
-          set lc_d_bsd = lc_d_bsd - v2.jhpc; 
+          set lc_d_bsd = lc_d_bsd - v2.jhcl; 
         end if; 
-      end for lp2; --“‘…œŒ™ ¬÷—Ø»’º∆ªÆ 
-    end for lp1; --“‘…œŒ™ ¬÷—Øº∆ªÆ‘¬∑› 
+      end for lp2; --‰ª•‰∏ä‰∏∫ ËΩÆËØ¢Êó•ËÆ°Âàí 
+    end for lp1; --‰ª•‰∏ä‰∏∫ ËΩÆËØ¢ËÆ°ÂàíÊúà‰ªΩ 
     
-  end if; -- “‘…œŒ™ ¥¶¿Ì÷∏∂®≈∆∫≈µƒæÌΩ”∞¸º∆ªÆ 
+    --Êõ¥Êñ∞ÊâπÊ¨°Êï∞Èáè
+    update YYZY.T_YYZY_TMP_RSCPCB 
+    set jhpc = round(jhcl * 1.000000 / lc_i_dpcl, 0) 
+    where pfphdm = ip_pfphdm 
+      and jhrq < ip_mxjjbrq 
+    ; 
+    
+  end if; -- ‰ª•‰∏ä‰∏∫ Â§ÑÁêÜÊåáÂÆöÁâåÂè∑ÁöÑÂç∑Êé•ÂåÖËÆ°Âàí 
 ---------------------------------------------------------------------------------------
-  -- ∆Ê≈º±Íº«
+  -- Â•áÂÅ∂Ê†áËÆ∞
   set lc_i_flg1 = mod(month(ip_mxjjbrq),2); 
   
-  lp3:  --¬÷—ØÀ˘”–º∆ªÆº«¬º
+  lp3:  --ËΩÆËØ¢ÊâÄÊúâËÆ°ÂàíËÆ∞ÂΩï
   for v3 as c3 cursor for 
-    select pfphdm, ksrq, jsrq, jhpc_avg
-    from YYZY.T_YYZY_RSCJHB_WHB
+    select pfphdm, ksrq, jsrq, jhpc_avg 
+    from YYZY.T_YYZY_RSCJHB_WHB 
     where pfphdm = ip_pfphdm 
       and ksrq>=(case 
                   when ip_pfphdm in (select pfphdm from DIM.T_DIM_YYZY_PFPH_PHCF where sccjdm in (1,2)) 
@@ -143,13 +150,10 @@ lbmain : BEGIN
                     date('1980-01-01') 
                 end) 
   do
---    insert into debug.t_debug_msg(msg)values('lp3 in');
     set lc_i_ts = (days(v3.jsrq) - days(v3.ksrq) + 1);
     set lc_i_tot = v3.jhpc_avg * lc_i_ts + round(MATH.F_QZBS(v3.jhpc_avg * lc_i_ts),2);
     set lc_i_min = lc_i_tot / lc_i_ts;
     set lc_i_ys = mod(lc_i_tot, lc_i_ts);
-    
---    insert into debug.t_debug_msg(msg)values('lp4 in;lc_i_ts='||char(lc_i_ts)||';lc_i_tot='||char(lc_i_tot)||';lc_i_min='||char(lc_i_min)||';lc_i_ys='||char(lc_i_ys));
     
     insert into session.scjh_r1(jhrq, jhpc)
     select riqi, 0
@@ -170,70 +174,65 @@ lbmain : BEGIN
     ;
     
     set lc_i_tmpys = lc_i_ys;
-    lp4: -- º∆À„√ø‘¬À˘∑÷≈‰µƒ”‡ ˝
+    lp4: -- ËÆ°ÁÆóÊØèÊúàÊâÄÂàÜÈÖçÁöÑ‰ΩôÊï∞
     for v4 as c4 cursor for 
-        select nf, yf, ksrq, jsrq, ts, qz, fppc
-        from session.scjh_yfp
-        order by nf, yf
-        FOR UPDATE OF fppc
-    do
---      insert into debug.t_debug_msg(msg)values('lp4 in');
-      set lc_i_tmpval = round(v4.qz * lc_i_ys, 2);
-      set lc_i_tmpval = lc_i_tmpval + round(MATH.F_QZBS(lc_i_tmpval),2);
-      update session.scjh_yfp
-      set fppc = (case when lc_i_tmpval<=lc_i_tmpys then lc_i_tmpval else lc_i_tmpys end)
-      where current of c4
-      ;
-      set lc_i_tmpys = lc_i_tmpys - lc_i_tmpval;
+        select nf, yf, ksrq, jsrq, ts, qz, fppc 
+        from session.scjh_yfp 
+        order by nf, yf 
+        FOR UPDATE OF fppc 
+    do 
+      set lc_i_tmpval = round(v4.qz * lc_i_ys, 2); 
+      set lc_i_tmpval = lc_i_tmpval + round(MATH.F_QZBS(lc_i_tmpval),2); 
+      update session.scjh_yfp 
+      set fppc = (case when lc_i_tmpval<=lc_i_tmpys then lc_i_tmpval else lc_i_tmpys end) 
+      where current of c4 
+      ; 
+      set lc_i_tmpys = lc_i_tmpys - lc_i_tmpval; 
       
-      if lc_i_tmpys<=0 then
-        leave lp4;
-      end if;
---      insert into debug.t_debug_msg(msg)values('lp4 out');
-    end for lp4; -- “‘…œŒ™ º∆À„√ø‘¬À˘∑÷≈‰µƒ”‡ ˝
+      if lc_i_tmpys<=0 then 
+        leave lp4; 
+      end if; 
+    end for lp4; -- ‰ª•‰∏ä‰∏∫ ËÆ°ÁÆóÊØèÊúàÊâÄÂàÜÈÖçÁöÑ‰ΩôÊï∞
     
-    lp5:  --»’º∆ªÆ≈˙¥Œ ˝æ›º∆À„
+    lp5:  --Êó•ËÆ°ÂàíÊâπÊ¨°Êï∞ÊçÆËÆ°ÁÆó
     for v5 as c5 cursor for
         select nf, yf, ksrq, jsrq, ts, qz, fppc
         from session.scjh_yfp
         order by ksrq, jsrq
     do
---      insert into debug.t_debug_msg(msg)values('lp5 in');
-      if (mod(yf,2) = 1 and lc_i_flg1 = 1) or (mod(yf,2) = 0 and lc_i_flg1 = 0) then
-        --◊Ó¥ÛæÌ—Ã∞¸÷Æ∫Ûµƒ‘¬∑›Œ™∆Ê ˝,‘Ú∆Ê ˝‘¬∑›Õ˘«∞≈≈¡–
-        update session.scjh_r1
-        set jhpc = 1
-        where jhrq between v5.ksrq and v5.ksrq + (fppc-1) day
+      if (mod(v5.yf,2) = 1 and lc_i_flg1 = 1) or (mod(v5.yf,2) = 0 and lc_i_flg1 = 0) then 
+        --ÊúÄÂ§ßÂç∑ÁÉüÂåÖ‰πãÂêéÁöÑÊúà‰ªΩ‰∏∫Â•áÊï∞,ÂàôÂ•áÊï∞Êúà‰ªΩÂæÄÂâçÊéíÂàó
+        update session.scjh_r1 
+        set jhpc = 1 
+        where jhrq between v5.ksrq and v5.ksrq + (v5.fppc-1) day 
         ;
-      else --∑¥÷Æ≈º ˝‘¬Õ˘«∞≈≈≤º
-        update session.scjh_r1
-        set jhpc = 1
-        where jhrq between v5.jsrq - (fppc-1) day and v5.jsrq
-        ;
+      else --Âèç‰πãÂÅ∂Êï∞ÊúàÂæÄÂâçÊéíÂ∏É 
+        update session.scjh_r1 
+        set jhpc = 1 
+        where jhrq between v5.jsrq - (v5.fppc-1) day and v5.jsrq 
+        ; 
       end if;
       
-      --‘ˆº”∆Ωæ˘≈˙¥Œ
+      --Â¢ûÂä†Âπ≥ÂùáÊâπÊ¨°
       update session.scjh_r1
       set jhpc = jhpc + lc_i_min
       where jhrq between v5.ksrq and v5.jsrq
       ;
---      insert into debug.t_debug_msg(msg)values('lp5 out');
-    end for lp5; --“‘…œŒ™ »’º∆ªÆ≈˙¥Œ ˝æ›º∆À„
---    insert into debug.t_debug_msg(msg)values('lp3 out');
-  end for lp3; -- “‘…œŒ™ ¬÷—ØÀ˘”–º∆ªÆº«¬º
+    end for lp5; --‰ª•‰∏ä‰∏∫ Êó•ËÆ°ÂàíÊâπÊ¨°Êï∞ÊçÆËÆ°ÁÆó
+  end for lp3; -- ‰ª•‰∏ä‰∏∫ ËΩÆËØ¢ÊâÄÊúâËÆ°ÂàíËÆ∞ÂΩï
   
-  --¥¶¿Ì‘¬º∆ªÆ√÷≤π
-  call YYZY.P_YYZY_RSCJH_RJHXZ(ip_pfphdm);
+  --Â§ÑÁêÜÊúàËÆ°ÂàíÂº•Ë°•
+  call YYZY.P_YYZY_RSCJH_RJHXZ(ip_pfphdm); 
   
-  --∫œ≤¢œ‡Õ¨≈˙¥Œ ˝µƒ»’∆⁄
-  insert into YYZY.T_YYZY_TMP_RSCJHB_WHB(pfphdm, ksrq, jsrq, jhpc_avg)
+  --ÂêàÂπ∂Áõ∏ÂêåÊâπÊ¨°Êï∞ÁöÑÊó•Êúü
+  insert into YYZY.T_YYZY_TMP_RSCJHB_WHB(pfphdm, ksrq, jsrq, jhpc_avg) 
   with tb_jhr as (
     select jhrq, jhpc, rownumber()over(order by jhrq) as xh
     from 
     (
-      select * from YYZY.T_YYZY_TMP_RSCPCB
+      select pfphdm, jhrq, jhpc from YYZY.T_YYZY_TMP_RSCPCB
       union all 
-      select * from session.scjh_r1
+      select pfphdm, jhrq, jhpc from session.scjh_r1
     ) as tb
   )
   , tb_jh_cir(jhrq, jhpc, xh, xh1) as (
@@ -299,92 +298,23 @@ CREATE PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ()
     )ON COMMIT PRESERVE ROWS WITH REPLACE;
 
   /*proc body*/
-  
   select date(to_date(max(c_date),'YYYYMMDD')), date(max(d_createtime)) into lc_d_mxjjbrq, lc_d_bbrq
   from hds_cxqj.n_cxqj_o_prodplanhist_n
   where (c_date,n_version)in(select c_date,max(n_version) from hds_cxqj.n_cxqj_o_prodplanhist_n group by c_date)
     and c_date>=char(year(current_date)*10000+month(current_date)*100+day(current_date)) 
   ;
   set lc_d_mxjjbrq = lc_d_mxjjbrq - (day(lc_d_mxjjbrq)-1) day + 1 month; 
-  
-/*
-    INSERT INTO SESSION.RSCJHB_TMP(PFPHDM, KSRQ, JSRQ, JHCL_AVG,JHPC_AVG,BBRQ)
-    WITH RIQI AS (
-      SELECT RIQI 
-      FROM DIM.T_DIM_YYZY_DATE 
-      WHERE RIQI BETWEEN (SELECT MIN(KSRQ) FROM YYZY.T_YYZY_RSCJHB_WHB) AND (SELECT MAX(JSRQ) FROM YYZY.T_YYZY_RSCJHB_WHB)
-    )
-    --≥˝»•’˚ƒÍµƒ≤¢«“≈˙¥Œµ»”⁄0µƒ
-    , RSCJH_CZN(PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG) AS (
-      SELECT PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG
-      FROM YYZY.T_YYZY_RSCJHB_WHB
-      EXCEPT
-      SELECT A.PFPHDM,A.KSRQ,A.JSRQ,A.JHCL_AVG,A.JHPC_AVG
-      FROM YYZY.T_YYZY_RSCJHB_WHB A
-      WHERE A.KSRQ=DATE(TRIM(CHAR(YEAR(A.KSRQ)))||'-01-01')
-      AND A.JSRQ=DATE(TRIM(CHAR(YEAR(A.KSRQ)))||'-12-31')
-      AND JHPC_AVG=0
-    )
-    --≤∑÷µΩÃÏ
-    , RSCJH_CZN2(PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG,JHNF,JHYF) AS (
-      SELECT A.PFPHDM, B.RIQI KSRQ,B.RIQI JSRQ, VALUE(JHCL_AVG,0) JHCL_AVG, 
-        VALUE(JHPC_AVG,0) JHPC_AVG,YEAR(B.RIQI) JHNF,MONTH(B.RIQI) JHYF
-      FROM RSCJH_CZN A JOIN RIQI B
-          ON B.RIQI BETWEEN A.KSRQ AND A.JSRQ
-    )
-    --≤∑÷µΩ‘¬,º∆ªÆ≈˙¥Œ∆Ωæ˘µΩ‘¬√ø“ªÃÏ
-    , RSCJH_CZN3(PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG,JHNF,JHYF,YJHPC) AS ( 
-      SELECT PFPHDM, MIN(KSRQ), MAX(JSRQ), MIN(JHCL_AVG),DEC(AVG(JHPC_AVG)) JHPC_AVG,JHNF,JHYF,CEIL(SUM(JHPC_AVG)) YJHPC
-          FROM RSCJH_CZN2 
-          GROUP BY PFPHDM,JHNF,JHYF
-    ),
-    --∆Ωæ˘µΩ√øÃÏ∫Û £”‡µƒ≈˙¥Œ
-    RSCJH_CZN4(PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG,JHNF,JHYF,YJHPC,YS) AS (
-              SELECT PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG,JHNF,JHYF,YJHPC,(YJHPC-JHPC_AVG*(DAYS(JSRQ+1 DAY)-DAYS(KSRQ)))YS
-          FROM RSCJH_CZN3
-    ),
-    --Ω´ £”‡µƒ≈˙¥Œæ˘ÃØµΩ‘¬µƒ«∞NÃÏ
-    RSCJH_CZN5(PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG) AS (
-            SELECT PFPHDM,KSRQ,(KSRQ+(YS-1) DAY) JSRQ, JHCL_AVG,(JHPC_AVG+1) JHPC_AVG
-          FROM RSCJH_CZN4
-          WHERE (KSRQ+(YS-1) DAY)<>YYZY.F_LAST_DAY(KSRQ) AND YS>0
-          UNION ALL
-          SELECT PFPHDM,(KSRQ+ YS DAY) KSRQ,JSRQ, JHCL_AVG,JHPC_AVG
-          FROM RSCJH_CZN4
-          WHERE (KSRQ+(YS-1) DAY)<>YYZY.F_LAST_DAY(KSRQ) AND YS>0
-          UNION ALL
-            SELECT  PFPHDM, KSRQ,(KSRQ+(YS-1) DAY) JSRQ, JHCL_AVG,(JHPC_AVG+1) JHPC_AVG
-            FROM RSCJH_CZN4
-            WHERE (KSRQ+(YS-1) DAY)=YYZY.F_LAST_DAY(KSRQ) AND YS>0
-          UNION ALL
-          SELECT PFPHDM,KSRQ,JSRQ, JHCL_AVG,JHPC_AVG
-          FROM RSCJH_CZN4
-          WHERE YS=0
-    ),
-    RSCJH_ALL(PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG,BBRQ) AS (
-          SELECT PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG ,CURRENT DATE BBRQ
-          FROM RSCJH_CZN5
-          UNION ALL
-          SELECT A.PFPHDM,A.KSRQ,A.JSRQ,A.JHCL_AVG,A.JHPC_AVG,CURRENT DATE BBRQ
-          FROM YYZY.T_YYZY_RSCJHB_WHB A
-          WHERE A.KSRQ=DATE(TRIM(CHAR(YEAR(A.KSRQ)))||'-01-01')
-          AND A.JSRQ=DATE(TRIM(CHAR(YEAR(A.KSRQ)))||'-12-31')
-          AND JHPC_AVG=0
-    )
-    SELECT PFPHDM, KSRQ, JSRQ, JHCL_AVG,
-        CASE WHEN PFPHDM IN (SELECT PFPHDM FROM YYZY.T_YYZY_PFPH_CFG WHERE JSBJ='0' AND GPBJ='1') THEN  CAST(NULL AS DECIMAL(18,2))
-      ELSE JHPC_AVG END  JHPC_AVG,BBRQ FROM RSCJH_ALL;
-*/
+
   delete from YYZY.T_YYZY_TMP_RSCJHB_WHB;
-  lp1:  --∞¥≈∆∫≈¬÷—Ø¥¶¿Ìº∆ªÆ
+  lp1:  --ÊåâÁâåÂè∑ËΩÆËØ¢Â§ÑÁêÜËÆ°Âàí
   for v1 as c1 cursor for 
     select distinct pfphdm
     from YYZY.T_YYZY_RSCJHB_WHB
   do
     call YYZY.P_YYZY_RSCJHB_PCQZ_DPH(v1.pfphdm, lc_d_mxjjbrq);
-  end for lp1;  -- ∞¥≈∆∫≈¬÷—Ø¥¶¿Ìº∆ªÆ
+  end for lp1;  -- ÊåâÁâåÂè∑ËΩÆËØ¢Â§ÑÁêÜËÆ°Âàí
   
-  --∏˘æ›≈˙¥Œ∏¸–¬≤˙¡ø
+  --Ê†πÊçÆÊâπÊ¨°Êõ¥Êñ∞‰∫ßÈáè
   UPDATE  YYZY.T_YYZY_TMP_RSCJHB_WHB as A 
   SET JHCL_AVG= JHPC_AVG*(  
                             SELECT  DPCL FROM YYZY.T_YYZY_DPCLB as B
@@ -400,26 +330,15 @@ CREATE PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ()
           AND A.PFPHDM=C.PFPHDM
       )
     AND PFPHDM NOT IN (SELECT PFPHDM FROM YYZY.T_YYZY_PFPH_CFG WHERE JSBJ='0' AND GPBJ='1')
-  ; --“‘…œ ∏˘æ›≈˙¥Œ∏¸–¬≤˙¡ø
+  ; --‰ª•‰∏ä Ê†πÊçÆÊâπÊ¨°Êõ¥Êñ∞‰∫ßÈáè
   
-  -- ˝æ›»Îø‚
+  --Êï∞ÊçÆÂÖ•Â∫ì
   DELETE FROM YYZY.T_YYZY_RSCJHB_WHB where pfphdm in (select pfphdm from YYZY.T_YYZY_TMP_RSCJHB_WHB);
   INSERT INTO YYZY.T_YYZY_RSCJHB_WHB (PFPHDM, KSRQ, JSRQ, JHCL_AVG,JHPC_AVG,BBRQ)
   SELECT PFPHDM, KSRQ, JSRQ, JHCL_AVG,JHPC_AVG, lc_d_bbrq 
   FROM YYZY.T_YYZY_TMP_RSCJHB_WHB
   ;
 
---  COMMIT;
 END;
 
-COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ ( ) 
-  IS '»’…˙≤˙º∆ªÆŒ¨ª§±Ì»°’˚';
-
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ ( ) 
-  TO USER APPUSR;
-
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ ( ) 
-  TO USER ETLUSR;
-
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ ( ) 
-  TO USER DB2INST2 WITH GRANT OPTION;
+COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ() IS 'Êó•Áîü‰∫ßËÆ°ÂàíÁª¥Êä§Ë°®ÂèñÊï¥';
