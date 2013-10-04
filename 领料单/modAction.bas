@@ -62,20 +62,31 @@ End Sub
 
 Public Function lockSheet1()
 
+    On Error GoTo ErrorHandle
+    
     ThisWorkbook.Worksheets("日投料批次").Protect _
         Password:="qqq111=", _
         DrawingObjects:=True, Contents:=True, Scenarios:=True, _
         AllowInsertingColumns:=True, AllowInsertingRows:=True, _
         AllowInsertingHyperlinks:=True, AllowDeletingColumns:=True, _
         AllowDeletingRows:=True, AllowSorting:=True, AllowFiltering:=True
+
+ErrorHandle:
+    Exit Function
 End Function
 
 Public Function unlockSheet1()
+    
+    On Error GoTo ErrorHandle
+    
     ThisWorkbook.Worksheets("日投料批次").Protect _
         Password:="qqq111=", _
         DrawingObjects:=False, Contents:=False, Scenarios:=False, _
         AllowInsertingColumns:=False, AllowInsertingRows:=False, _
         AllowInsertingHyperlinks:=False, AllowDeletingColumns:=False, _
         AllowDeletingRows:=False, AllowSorting:=False, AllowFiltering:=False
+        
+ErrorHandle:
+    Exit Function
 End Function
 
