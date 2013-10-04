@@ -21,7 +21,6 @@ Public Function dorg_initProdTable(ws As Worksheet, phlist As Collection)
     For Each ph In phlist
         ws.Cells(i, c).Select
         ws.Cells(i, c).Value = ph
-        
         i = i + 1
     Next
     
@@ -69,6 +68,7 @@ Public Function dorg_generateSupplyTableList(ByRef stl As Collection)
         '复制模板
         mb.Copy
         ws.Activate
+        ws.Cells(i, c).Select
         ws.Cells(i, c).Activate
         ws.Paste
         '更新日期、牌号名称、总投产批次
