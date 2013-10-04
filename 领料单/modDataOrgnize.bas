@@ -86,6 +86,10 @@ Public Function dorg_generateSupplyTableList(ByRef stl As Collection)
         
         ws.Range(Cells(i1, c), Cells(i - 1, c + 2)).BorderAround xlContinuous, xlMedium, xlColorIndexAutomatic
         
+        sAddr = ws.Range(Cells(i1 + 3, c + 2), Cells(i - 1, c + 2)).Address(RowAbsolute:=False, ColumnAbsolute:=False)
+        ws.Cells(i, c).Value = "合计"
+        ws.Cells(i, c + 2).Formula = "=sum(" & sAddr & ")"
+        
         i = i + 2
         
     Next
@@ -112,6 +116,7 @@ Public Function dorg_generateSupplyTableListT(ByRef st_t As clsSupplyTable)
     '复制模板
     mb.Copy
     ws.Activate
+    ws.Cells(i, c).Select
     ws.Cells(i, c).Activate
     ws.Paste
     '更新日期、牌号名称、总投产批次
@@ -127,6 +132,10 @@ Public Function dorg_generateSupplyTableListT(ByRef st_t As clsSupplyTable)
     Next
     
     ws.Range(Cells(i1, c), Cells(i - 1, c + 2)).BorderAround xlContinuous, xlMedium, xlColorIndexAutomatic
+    
+    sAddr = ws.Range(Cells(i1 + 2, c + 2), Cells(i - 1, c + 2)).Address(RowAbsolute:=False, ColumnAbsolute:=False)
+    ws.Cells(i, c).Value = "合计"
+    ws.Cells(i, c + 2).Formula = "=sum(" & sAddr & ")"
     
 End Function
 
