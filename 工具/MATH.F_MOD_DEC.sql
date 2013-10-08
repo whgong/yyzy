@@ -19,7 +19,7 @@ begin atomic
   end if; 
   
   set lc_n_tmp = val;
-  while lc_n_tmp>mod 
+  while lc_n_tmp>=mod 
   do 
     set lc_n_tmp = lc_n_tmp - mod; 
   end while; 
