@@ -2,7 +2,7 @@ SET SCHEMA = ETLUSR;
 SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,ETLUSR;
 
 /*******************************************************************************/
---´´½¨¹ı³ÌÖĞÊ¹ÓÃµ½µÄÁÙÊ±±í
+--åˆ›å»ºè¿‡ç¨‹ä¸­ä½¿ç”¨åˆ°çš„ä¸´æ—¶è¡¨
 /*
 drop table yyzy.t_yyzy_tmp_sdpfyyfpgz;
 create table yyzy.t_yyzy_tmp_sdpfyyfpgz
@@ -30,7 +30,7 @@ create table YYZY.T_YYZY_TMP_ZXPF_SDB like YYZY.T_YYZY_ZXPF_SDB in ts_reg_16K;
 */
 
 /*******************************************************************************/
---¸üĞÂµ¥¸ö½ÇÉ«µÄËø¶¨Åä·½
+--æ›´æ–°å•ä¸ªè§’è‰²çš„é”å®šé…æ–¹
 drop PROCEDURE YYZY.P_YYZY_SDPFGX6DPH;
 
 CREATE PROCEDURE YYZY.P_YYZY_SDPFGX6DPH
@@ -99,7 +99,7 @@ BEGIN ATOMIC
 --  from yyzy.t_yyzy_tmp_yyxhtjb
 --  where pfphdm = ip_pfphdm and jsdm = ip_jsdm
 --  ;
---  insert into DEBUG.T_DEBUG_MSG(msg)values('²ÎÊı:ip_pfphdm='||char(ip_pfphdm)||';ip_jsdm='||char(ip_jsdm)||';');
+--  insert into DEBUG.T_DEBUG_MSG(msg)values('å‚æ•°:ip_pfphdm='||char(ip_pfphdm)||';ip_jsdm='||char(ip_jsdm)||';');
   set lv_n_jssyl = 0;
   set lv_n_dyl = 0;
   set lv_n_thyl = 0;
@@ -114,31 +114,36 @@ BEGIN ATOMIC
     
     set lv_n_yhyl = lv_n_dyl;
     set lv_d_pfksrq = 
-      --case when lv_n_jssyl<>0 and lv_n_jssyl=lv_n_thyl then lv_d_pfjsrq+1 day else lv_d_pfjsrq end ¡¢
+      --case when lv_n_jssyl<>0 and lv_n_jssyl=lv_n_thyl then lv_d_pfjsrq+1 day else lv_d_pfjsrq end ã€
       case when lv_n_jssyl <>0 and (select sum(jssyl) from YYZY.T_YYZY_TMP_ZXPF_SDB where pfphdm = ip_pfphdm and jsdm=ip_jsdm and jsrq = lv_d_pfjsrq)=lv_n_thyl then lv_d_pfjsrq+1 day else lv_d_pfjsrq end 
-    ; --ÈôÉÏÒ»×©¿éÕıºÃÊ¹ÓÃÍê£¬¿ªÊ¼ÈÕÆÚÎªÉÏÒ»×©¿é½áÊøÈÕÆÚ+1Ìì£¬·ñÔòÎªÉÏÒ»×©¿é½áÊøÈÕÆÚ
+    ; --è‹¥ä¸Šä¸€ç –å—æ­£å¥½ä½¿ç”¨å®Œï¼Œå¼€å§‹æ—¥æœŸä¸ºä¸Šä¸€ç –å—ç»“æŸæ—¥æœŸ+1å¤©ï¼Œå¦åˆ™ä¸ºä¸Šä¸€ç –å—ç»“æŸæ—¥æœŸ
     set lv_n_zxsx = 
       value((select sum(jssyl) 
       from YYZY.T_YYZY_TMP_ZXPF_SDB 
       where pfphdm = ip_pfphdm and jsdm=ip_jsdm 
         and jsrq=lv_d_pfksrq),0)
-    ; --zxsxÎª¸Ã×©¿é¿ªÊ¼Ê¹ÓÃÄÇÌìÄÚ£¬ÔÚ¸Ã×©¿éÖ®Ç°ºÄÓÃµÄÑÌÒ¶ÊıÁ¿
+    ; --zxsxä¸ºè¯¥ç –å—å¼€å§‹ä½¿ç”¨é‚£å¤©å†…ï¼Œåœ¨è¯¥ç –å—ä¹‹å‰è€—ç”¨çš„çƒŸå¶æ•°é‡
 --    insert into DEBUG.T_DEBUG_MSG(msg)values('flg1');
     set lv_n_thyl_f = ( 
         select hl_d from yyzy.t_yyzy_tmp_yyxhtjb 
         where pfphdm = ip_pfphdm and jsdm=ip_jsdm 
         and lv_d_pfksrq between ksrq and jsrq
       )
-    ;--×©¿éµÚÒ»ÌìËù´¦ÈÕÆÚµÄÈÕºÄÓÃÁ¿
+    ;--ç –å—ç¬¬ä¸€å¤©æ‰€å¤„æ—¥æœŸçš„æ—¥è€—ç”¨é‡
 --    insert into DEBUG.T_DEBUG_MSG(msg)values('flg2');
     set lv_n_kssyl = 
       case when lv_n_yyfpl<lv_n_thyl_f-lv_n_zxsx then lv_n_yyfpl else lv_n_thyl_f-lv_n_zxsx end
-    ;-- ¿ªÊ¼Ê¹ÓÃÁ¿ = ¸ÃÑÌÒ¶µÚÒ»ÌìµÄºÄÓÃÊıÁ¿
+    ;-- å¼€å§‹ä½¿ç”¨é‡ = è¯¥çƒŸå¶ç¬¬ä¸€å¤©çš„è€—ç”¨æ•°é‡
 --    insert into DEBUG.T_DEBUG_MSG(msg)values('flg3:lv_n_yhyl='||char(lv_n_yhyl)||';lv_n_yyfpl='||char(lv_n_yyfpl));
     while lv_n_yhyl < lv_n_yyfpl do
       fetch c2 into lv_d_ksrq, lv_d_jsrq,lv_n_thyl;
 --      insert into DEBUG.T_DEBUG_MSG(msg)values('flg4');
-      if SQL_CUR_AT_END = 1 then LEAVE lp1; end if;--Òì³£´¦Àí:Èô¼Æ»®Á¿Ğ¡ÓÚ·ÖÅäÁ¿,Ò»°ã²»¿ÉÄÜ³öÏÖ
+      if SQL_CUR_AT_END = 1 then 
+        set lv_d_pfjsrq = lv_d_jsrq;
+        set lv_n_jssyl = 0; 
+        set lv_n_dyl = 0; 
+        goto lb_insert; 
+      end if;--å¼‚å¸¸å¤„ç†:è‹¥è®¡åˆ’é‡å°äºåˆ†é…é‡,ä¸€èˆ¬ä¸å¯èƒ½å‡ºç°
 --      insert into DEBUG.T_DEBUG_MSG(msg)values('flg5');
       set lv_n_yhyl = lv_n_yhyl + lv_n_thyl * (days(lv_d_jsrq)- days(lv_d_ksrq) + 1 );
       
@@ -149,7 +154,7 @@ BEGIN ATOMIC
 --    insert into DEBUG.T_DEBUG_MSG(msg)values('flg7:lv_n_yyfpl='||char(lv_n_yyfpl)||';lv_n_thyl='||char(lv_n_thyl)||';lv_n_zxsx='||char(lv_n_zxsx)||';lv_n_dyl='||char(lv_n_dyl));
 --    set lv_n_jssyl = 
 --      case when lv_n_yyfpl<lv_n_thyl-lv_n_zxsx then lv_n_yyfpl else lv_n_thyl - (case when lv_n_thyl=0 then 0 else mod(int(lv_n_dyl) ,int(lv_n_thyl)) end) end 
---    ; --Èô×©¿éµÄºÄÓÃÊıÁ¿<Ò»ÌìÄÚÊ£ÓàµÄÊ¹ÓÃÁ¿£¬½áÊøÊ¹ÓÃÁ¿¾ÍµÈÓÚÑÌÒ¶·ÖÅäÁ¿£¬·ñÕßÈÕºÄÓÃÁ¿-È¡Óà(Î´·ÖÅäÁ¿)
+--    ; --è‹¥ç –å—çš„è€—ç”¨æ•°é‡<ä¸€å¤©å†…å‰©ä½™çš„ä½¿ç”¨é‡ï¼Œç»“æŸä½¿ç”¨é‡å°±ç­‰äºçƒŸå¶åˆ†é…é‡ï¼Œå¦è€…æ—¥è€—ç”¨é‡-å–ä½™(æœªåˆ†é…é‡)
 --    insert into DEBUG.T_DEBUG_MSG(msg)values('flg8:lv_d_jsrq='||value(char(lv_d_jsrq),'')||';lv_n_thyl='||char(lv_n_thyl)||';lv_n_dyl='||char(lv_n_dyl));
     
     if lv_n_yyfpl=0 then 
@@ -162,16 +167,16 @@ BEGIN ATOMIC
       - (case when lv_n_thyl=0 then 0 else mod(int(lv_n_dyl) ,int(lv_n_thyl)) end) 
       - value((select sum(jssyl) from YYZY.T_YYZY_TMP_ZXPF_SDB where pfphdm = ip_pfphdm and jsdm=ip_jsdm and jsrq=lv_d_pfjsrq ),0)
 --      case when lv_n_yyfpl<lv_n_thyl-lv_n_zxsx then lv_n_yyfpl else lv_n_thyl - (case when lv_n_thyl=0 then 0 else mod(int(lv_n_dyl) ,int(lv_n_thyl)) end) end 
-    ; --Èô×©¿éµÄºÄÓÃÊıÁ¿<Ò»ÌìÄÚÊ£ÓàµÄÊ¹ÓÃÁ¿£¬½áÊøÊ¹ÓÃÁ¿¾ÍµÈÓÚÑÌÒ¶·ÖÅäÁ¿£¬·ñÕßÈÕºÄÓÃÁ¿-È¡Óà(Î´·ÖÅäÁ¿)
+    ; --è‹¥ç –å—çš„è€—ç”¨æ•°é‡<ä¸€å¤©å†…å‰©ä½™çš„ä½¿ç”¨é‡ï¼Œç»“æŸä½¿ç”¨é‡å°±ç­‰äºçƒŸå¶åˆ†é…é‡ï¼Œå¦è€…æ—¥è€—ç”¨é‡-å–ä½™(æœªåˆ†é…é‡)
     
---    insert into DEBUG.T_DEBUG_MSG(msg)values('Êı¾İÈë¿â');
+lb_insert:
     insert into YYZY.T_YYZY_TMP_ZXPF_SDB(
       PFPHDM, JSDM, YYDM, YYNF, KSRQ, JSRQ, YYFPL, SDBH, 
       ZXSX, TDSX, KSSYL, JSSYL, ZLYYBJ, ZPFBJ, FJCHSX, FJCHXX, 
       KCLX, BBRQ, LOAD_TIME
     )
     select PFPHDM, JSDM, YYDM, YYNF, lv_d_pfksrq, lv_d_pfjsrq, 
-      YYFPL, 0 as SDBH, lv_n_zxsx, TDSX, lv_n_kssyl, lv_n_jssyl, ZLYYBJ,
+      (lv_n_yhyl - lv_n_dyl) as YYFPL, 0 as SDBH, lv_n_zxsx, TDSX, lv_n_kssyl, lv_n_jssyl, ZLYYBJ,
       ZPFBJ, FJCHSX, FJCHXX, KCLX, BBRQ, current_timestamp as LOAD_TIME
     from YYZY.T_YYZY_TMP_SDPFYYFPGZ 
     where pfphdm = ip_pfphdm and jsdm=ip_jsdm
@@ -184,7 +189,7 @@ BEGIN ATOMIC
   
 END LB_MAIN;
 
-COMMENT ON PROCEDURE YYZY.P_YYZY_SDPFGX6DPH( INTEGER,integer ) IS '6ÒªËØËø¶¨Åä·½¸üĞÂ µ¥ÅÆºÅ½ÇÉ«';
+COMMENT ON PROCEDURE YYZY.P_YYZY_SDPFGX6DPH( INTEGER,integer ) IS '6è¦ç´ é”å®šé…æ–¹æ›´æ–° å•ç‰Œå·è§’è‰²';
 
 GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_SDPFGX6DPH (INTEGER, integer) TO USER APPUSR;
 
@@ -238,7 +243,7 @@ BEGIN ATOMIC
   -- (BBDM INTEGER) with replace on commit preserve rows not logged; 
   
   /* SQL PROCEDURE BODY */
-  --»ñµÃ¸÷ÅÆºÅµÄÃ¿ÈÕËùĞèºÄÓÃÁ¿
+  --è·å¾—å„ç‰Œå·çš„æ¯æ—¥æ‰€éœ€è€—ç”¨é‡
   delete from yyzy.t_yyzy_tmp_yyxhtjb;
   insert into yyzy.t_yyzy_tmp_yyxhtjb(pfphdm,jsdm,ksrq,jsrq,hl_d)
   select pfphdm,JSDM,
@@ -269,7 +274,7 @@ BEGIN ATOMIC
   order by pfphdm,JSDM,(case when ad1<bd1 then bd1 else ad1 end)
   ; 
   
-  --»ñµÃ¸÷Åä·½Ëø¶¨ÑÌÒ¶ÊıÁ¿ºÍÌæ´úË³Ğò
+  --è·å¾—å„é…æ–¹é”å®šçƒŸå¶æ•°é‡å’Œæ›¿ä»£é¡ºåº
   delete from YYZY.T_YYZY_TMP_SDPFYYFPGZ;
   insert into YYZY.T_YYZY_TMP_SDPFYYFPGZ
   (
@@ -301,6 +306,6 @@ lp1:
   
 END LB_MAIN;
 
-COMMENT ON PROCEDURE YYZY.P_YYZY_SDPFGX6() IS '6ÒªËØËø¶¨Åä·½¸üĞÂ';
+COMMENT ON PROCEDURE YYZY.P_YYZY_SDPFGX6() IS '6è¦ç´ é”å®šé…æ–¹æ›´æ–°';
 
 GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_SDPFGX6 () TO USER APPUSR;
