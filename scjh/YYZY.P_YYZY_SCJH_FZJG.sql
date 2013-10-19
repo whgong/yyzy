@@ -138,7 +138,7 @@ BEGIN ATOMIC
       set lc_n_syscpc = (case when lc_n_syscpc<0 then 0 else lc_n_syscpc end); 
       -- 计划批次的平铺
       set lc_i_js = int(lc_n_sjscpc * 1.000000 / (days(lc_d_yjsrq) - days(lc_d_yksrq) + 1)); --基数 
-      set lc_i_ys = mod(lc_n_sjscpc, (days(lc_d_yjsrq) - days(lc_d_yksrq) + 1)); --余数 
+      set lc_i_ys = mod(int(lc_n_sjscpc), (days(lc_d_yjsrq) - days(lc_d_yksrq) + 1)); --余数 
       insert into YYZY.T_YYZY_TMP_RSCPCB(pfphdm, jhrq, jhpc) 
       select v3.FZPHDM as pfphdm, RIQI as jhrq, 
         (case 
@@ -169,7 +169,7 @@ BEGIN ATOMIC
       and lc_d_yjsrq between ksrq and jsrq
     ;
     set lc_i_js = int(lc_n_syscpc * 1.000000 / (days(lc_d_yjsrq) - days(lc_d_yksrq) + 1)); 
-    set lc_i_ys = mod(lc_n_syscpc, (days(lc_d_yjsrq) - days(lc_d_yksrq) + 1)); 
+    set lc_i_ys = mod(int(lc_n_syscpc), (days(lc_d_yjsrq) - days(lc_d_yksrq) + 1)); 
     insert into YYZY.T_YYZY_RSCJHB_WHB(pfphdm, ksrq, jsrq, jhpc_avg) 
     values 
       (v1.pfphdm, lc_d_yjsrq - (lc_i_ys - 1) day, lc_d_yjsrq, lc_i_js+1), 
