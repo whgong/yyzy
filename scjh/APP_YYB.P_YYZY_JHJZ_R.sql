@@ -1,15 +1,15 @@
 
-DROP SPECIFIC PROCEDURE "APP_YYB"."SQL130520170855400";
+DROP SPECIFIC PROCEDURE APP_YYB.SQL130520170855400;
 
-SET SCHEMA KSUSR   ;
+SET SCHEMA ETLUSR;
 
-SET CURRENT PATH = "SYSIBM","SYSFUN","SYSPROC","SYSIBMADM","KSUSR";
+SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,SYSIBMADM,ETLUSR;
 
-CREATE PROCEDURE "APP_YYB"."P_YYZY_JHJZ_R"
- (IN "START_DATE" DATE, 
-  OUT "MSG" VARCHAR(1000)
+CREATE PROCEDURE APP_YYB.P_YYZY_JHJZ_R
+ (IN START_DATE DATE, 
+  OUT MSG VARCHAR(1000)
  ) 
-  SPECIFIC "APP_YYB"."SQL130520170855400"
+  SPECIFIC APP_YYB.SQL130520170855400
   LANGUAGE SQL
   NOT DETERMINISTIC
   CALLED ON NULL INPUT
@@ -17,13 +17,13 @@ CREATE PROCEDURE "APP_YYB"."P_YYZY_JHJZ_R"
   OLD SAVEPOINT LEVEL
   MODIFIES SQL DATA
   INHERIT SPECIAL REGISTERS
-  --´æ´¢¹ı³Ì   
+  --å­˜å‚¨è¿‡ç¨‹   
 begin  
-  /*ÉùÃ÷*/ 
-  --¶¨ÒåÏµÍ³±äÁ¿ 1
+  /*å£°æ˜*/ 
+  --å®šä¹‰ç³»ç»Ÿå˜é‡ 1
   DECLARE SQLSTATE CHAR(5);  
   DECLARE SQLCODE INTEGER; 
-  --¶¨Òå±äÁ¿ 
+  --å®šä¹‰å˜é‡ 
   declare min_yr,max_yr,yr_2,yr_1,mn_1,mn_2,v_count,i_not_found integer; 
   declare v_rq,v_ksrq,v_jsrq,v_jsrq_2,judge_time date; 
   declare v_jhnf integer;
@@ -31,22 +31,21 @@ begin
   declare new_ksrq date; 
   declare new_jsrq date;
   
-  
-  --¹£Åò¼ÆËã
-  declare EXE_SQL           varchar(20000);     --¶¯Ì¬SQL
-  declare v_gengpeng_jm     varchar(8000); 	    --¹£Åò½âÃÜ
-  declare v_gengpeng_gs     varchar(8000);		--¹£Åò¼ÆËã¹«Ê½
-  declare v_gengpeng_cx     varchar(8000);		--¹£Åò½á¹û²éÑ¯
-  declare v_gengpeng_jm_p   varchar(8000); 	    --¹£Åò½âÃÜ_Åò
-  declare v_gengpeng_gs_p   varchar(8000);		--¹£Åò¼ÆËã¹«Ê½_Åò
-  declare v_gengpeng_cx_p   varchar(8000);		--¹£Åò½á¹û²éÑ¯_Åò
+  --æ¢—è†¨è®¡ç®—
+  declare EXE_SQL           varchar(20000);     --åŠ¨æ€SQL
+  declare v_gengpeng_jm     varchar(8000); 	    --æ¢—è†¨è§£å¯†
+  declare v_gengpeng_gs     varchar(8000);		--æ¢—è†¨è®¡ç®—å…¬å¼
+  declare v_gengpeng_cx     varchar(8000);		--æ¢—è†¨ç»“æœæŸ¥è¯¢
+  declare v_gengpeng_jm_p   varchar(8000); 	    --æ¢—è†¨è§£å¯†_è†¨
+  declare v_gengpeng_gs_p   varchar(8000);		--æ¢—è†¨è®¡ç®—å…¬å¼_è†¨
+  declare v_gengpeng_cx_p   varchar(8000);		--æ¢—è†¨ç»“æœæŸ¥è¯¢_è†¨
   
     
-  --¶¨Òå¿ÕÓÎ±ê
+  --å®šä¹‰ç©ºæ¸¸æ ‡
   DECLARE c0 CURSOR for s0;
   
   
-  --¶¨Òå¾²Ì¬ÓÎ±ê 
+  --å®šä¹‰é™æ€æ¸¸æ ‡ 
   declare c1 cursor for 
     select rq 
     from 
@@ -82,13 +81,13 @@ begin
 
   declare continue handler for not found set i_not_found = 1; 
   
-  --¶¨ÒåÒì³£´¦Àí 
+  --å®šä¹‰å¼‚å¸¸å¤„ç† 
   declare exit handler for sqlexception 
   begin 
-    set MSG = 'ÏµÍ³´íÎó£ºsqlcode='||rtrim(char(sqlcode))||',sqlstate='||sqlstate||';  '; 
+    set MSG = 'ç³»ç»Ÿé”™è¯¯ï¼šsqlcode='||rtrim(char(sqlcode))||',sqlstate='||sqlstate||';  '; 
   end; 
   
-  --¶¨ÒåÁÙÊ±±í
+  --å®šä¹‰ä¸´æ—¶è¡¨
   declare global temporary table tmp2( 
     pfphdm integer,
     jhrq date,
@@ -99,7 +98,7 @@ begin
   declare global temporary table tmp3 like yyzy.t_yyzy_tmp_rscjhb_whb 
   with replace on commit preserve rows not logged;
   
-  /*ÕıÎÄ*/ 
+  /*æ­£æ–‡*/ 
   --set new_ksrq = START_DATE - (dayofyear(START_DATE)-1) day + 3 year;
 	SELECT DATE(RTRIM(CHAR(MAX(JHNF)+1))||'-01-01') INTO NEW_KSRQ 
   FROM YYZY.T_YYZY_SNSCJH_ZXB
@@ -111,13 +110,13 @@ begin
     delete from session.tmp2;
     delete from session.tmp3;
 	
-	--´¦Àí YYZY.T_YYZY_SNSCJH_ZXB ÖĞÈıÄê¼Æ»®ÒÔÍâµÄÊı¾İ£¬·ñÔò¹ı³Ì±¨´í 20110630
+	--å¤„ç† YYZY.T_YYZY_SNSCJH_ZXB ä¸­ä¸‰å¹´è®¡åˆ’ä»¥å¤–çš„æ•°æ®ï¼Œå¦åˆ™è¿‡ç¨‹æŠ¥é”™ 20110630
 	INSERT INTO YYZY.T_YYZY_SNSCJH_ZXB_SC(PFPHDM, PZMC, SCCJ, JHNF, JHCL, BBH, SCSJ)
 	SELECT PFPHDM, PZMC, SCCJ, JHNF, JHCL, BBH,CURRENT TIMESTAMP AS SCSJ
 		   FROM YYZY.T_YYZY_SNSCJH_ZXB WHERE JHNF>=YEAR(CURRENT DATE)+3;
 	DELETE FROM YYZY.T_YYZY_SNSCJH_ZXB WHERE JHNF>=YEAR(CURRENT DATE)+3;
     
-  --Ğ´ÈëÔÂµ½ÈÕµÄ¼Æ»® 
+  --å†™å…¥æœˆåˆ°æ—¥çš„è®¡åˆ’ 
   insert into session.tmp2(pfphdm,jhrq,jhcl_avg) 
   with scjh as
   ( 
@@ -142,8 +141,8 @@ begin
     from scjh as a 
 	  left join (
     /*
-      2012-06-07¹¨çâ»ÛĞŞ¸Ä£¬Åä·½ºÏ²¢Âß¼­
-      ÔÚYYZY.T_YYZY_YS_PH27±íÖĞÔö¼ÓÓ³Éä¹æÔò£¬¿ÉÒÔºÏ²¢Åä·½
+      2012-06-07é¾šç®æ…§ä¿®æ”¹ï¼Œé…æ–¹åˆå¹¶é€»è¾‘
+      åœ¨YYZY.T_YYZY_YS_PH27è¡¨ä¸­å¢åŠ æ˜ å°„è§„åˆ™ï¼Œå¯ä»¥åˆå¹¶é…æ–¹
     */
 	    select yhbs_src, cjdm_src, YHBS, CJDM 
       from YYZY.T_YYZY_YS_PH27  
@@ -169,25 +168,25 @@ begin
     group by jhrq,f.pfphdm
     ;
 
-    --ÌØÊâ´¦Àí£º¸üĞÂµ±Äê1ÔÂ1ÈÕµÄ¼Æ»®Îª0 
+    --ç‰¹æ®Šå¤„ç†ï¼šæ›´æ–°å½“å¹´1æœˆ1æ—¥çš„è®¡åˆ’ä¸º0 
     update session.tmp2 
     set jhcl_avg=0.00
     where jhrq=start_date - dayofyear(start_date) day + 1 day;
 
 	
 	
-    --ÇóÃ¿ÈÕ¼Æ»®µÄÅĞ¶¨ÈÕÆÚ(×î´óÈÕÆÚµÄÏÂ¸öÔÂµÄ1ÈÕ) 
+    --æ±‚æ¯æ—¥è®¡åˆ’çš„åˆ¤å®šæ—¥æœŸ(æœ€å¤§æ—¥æœŸçš„ä¸‹ä¸ªæœˆçš„1æ—¥) 
     SELECT max(jhrq)+ 1 month- day(max(jhrq)+ 1 month) day+1 day into judge_time 
     from session.tmp2; 
     
-    set yr_1=year(judge_time-1 day); 		--yr_1 ÔÂµ½ÈÕ¼Æ»®×î´óÄê·İ 
-    select min(jhnf) into yr_2 				--yr_2 Äê¼Æ»®Äê·İ 
+    set yr_1=year(judge_time-1 day); 		--yr_1 æœˆåˆ°æ—¥è®¡åˆ’æœ€å¤§å¹´ä»½ 
+    select min(jhnf) into yr_2 				--yr_2 å¹´è®¡åˆ’å¹´ä»½ 
     from YYZY.T_YYZY_SNSCJH_ZXB 
     where bbh in (select max(bbh) from YYZY.T_YYZY_SNSCJH_ZXB)
 	  AND jhnf>=(select year(max(jhrq)) from session.tmp2);
     
-    set mn_1=month(judge_time-1 day); 		--mn_1ÔÂµ½ÈÕ¼Æ»®×î´óÔÂ·İ 
-    select value(max(jhyf),0) into mn_2 				--mn_2¼¾µ½ÔÂ¼Æ»®×î´óÔÂ·İ 
+    set mn_1=month(judge_time-1 day); 		--mn_1æœˆåˆ°æ—¥è®¡åˆ’æœ€å¤§æœˆä»½ 
+    select value(max(jhyf),0) into mn_2 				--mn_2å­£åˆ°æœˆè®¡åˆ’æœ€å¤§æœˆä»½ 
     from YYZY.T_YYZY_JSCJH 
     where (jhnf,jhyf,bbh)in( 
       select jhnf,jhyf,max(bbh) 
@@ -198,10 +197,10 @@ begin
 	
 	
 	
-    if yr_1=yr_2 then --Äê¼Æ»®ÓëÔÂ¼Æ»®ÎªÍ¬Ò»Äê 
-      if mn_1<12 then --ÔÂ¼Æ»®Îªµ±ÄêÄêÄ©,ĞèÒª¼ÆËãÄê¼Æ»®Ê£ÓàÁ¿ 
-        if mn_1<mn_2 then --ÔÂ¼Æ»®¸üĞÂ²»³¬¹ı¼¾¶È¼Æ»®£¬ĞèÒª¼ÆËã¼¾¶ÈÊ£Óà¼Æ»® 
-          --¼¾¶ÈÊ£Óà¼Æ»®
+    if yr_1=yr_2 then --å¹´è®¡åˆ’ä¸æœˆè®¡åˆ’ä¸ºåŒä¸€å¹´ 
+      if mn_1<12 then --æœˆè®¡åˆ’ä¸ºå½“å¹´å¹´æœ«,éœ€è¦è®¡ç®—å¹´è®¡åˆ’å‰©ä½™é‡ 
+        if mn_1<mn_2 then --æœˆè®¡åˆ’æ›´æ–°ä¸è¶…è¿‡å­£åº¦è®¡åˆ’ï¼Œéœ€è¦è®¡ç®—å­£åº¦å‰©ä½™è®¡åˆ’ 
+          --å­£åº¦å‰©ä½™è®¡åˆ’
           insert into session.tmp3(pfphdm,ksrq,jsrq,jhcl_avg) 
           with jdjh_tmp as (
             select pfphdm,date(rtrim(char(jhnf))||'-'||rtrim(char(jhyf))||'-01') as ksrq, 
@@ -209,10 +208,10 @@ begin
                 sum(JHCL) as jhcl 
             from YYZY.T_YYZY_JSCJH as a 
     /*
-      2012-06-07¹¨çâ»ÛĞŞ¸Ä£¬Åä·½ºÏ²¢Âß¼­
-      ÔÚYYZY.T_YYZY_YS_PH27±íÖĞÔö¼ÓÓ³Éä¹æÔò£¬¿ÉÒÔºÏ²¢Åä·½
+      2012-06-07é¾šç®æ…§ä¿®æ”¹ï¼Œé…æ–¹åˆå¹¶é€»è¾‘
+      åœ¨YYZY.T_YYZY_YS_PH27è¡¨ä¸­å¢åŠ æ˜ å°„è§„åˆ™ï¼Œå¯ä»¥åˆå¹¶é…æ–¹
 	  
-      2013-04-07ĞŞ¸Ä£¬Éú²ú³§¼ÒºÏ²¢£¬ÅÆºÅ²»ºÏ²¢	
+      2013-04-07ä¿®æ”¹ï¼Œç”Ÿäº§å‚å®¶åˆå¹¶ï¼Œç‰Œå·ä¸åˆå¹¶	
 	*/
             left join (
               select yhbs_src, cjdm_src, YHBS, CJDM 
@@ -245,7 +244,7 @@ begin
 		
 		 
 		
-        --ÔÂ¼Æ»®¸üĞÂÓë¼¾¶È¼Æ»®Í¬²½£¬²»ĞèÒª¼ÆËã¼¾¶ÈÊ£Óà¼Æ»®
+        --æœˆè®¡åˆ’æ›´æ–°ä¸å­£åº¦è®¡åˆ’åŒæ­¥ï¼Œä¸éœ€è¦è®¡ç®—å­£åº¦å‰©ä½™è®¡åˆ’
         insert into session.tmp3(pfphdm,ksrq,jsrq,jhcl_avg)
         with pfph as ( 
           select distinct PFPHDM 
@@ -264,8 +263,8 @@ begin
           select  pfphdm,JHNF,sum(JHCL) as jhcl
           from YYZY.T_YYZY_JSCJH as a 
     /*
-      2012-06-07¹¨çâ»ÛĞŞ¸Ä£¬Åä·½ºÏ²¢Âß¼­
-      ÔÚYYZY.T_YYZY_YS_PH27±íÖĞÔö¼ÓÓ³Éä¹æÔò£¬¿ÉÒÔºÏ²¢Åä·½
+      2012-06-07é¾šç®æ…§ä¿®æ”¹ï¼Œé…æ–¹åˆå¹¶é€»è¾‘
+      åœ¨YYZY.T_YYZY_YS_PH27è¡¨ä¸­å¢åŠ æ˜ å°„è§„åˆ™ï¼Œå¯ä»¥åˆå¹¶é…æ–¹
     */
           left join (
             select yhbs_src, cjdm_src, YHBS, CJDM 
@@ -301,7 +300,7 @@ begin
             select pfphdm,jhnf,jhcl
             from jjh
 			/*
-			2013-01-11ĞŞ¸Ä£¬ÓÉÓÚÎ´¼ÓÔØ¼¾¶ÈÉú²ú¼Æ»®£¬Äê¶È¼Æ»®¼õÈ¥µÄÊµ¼ÊÊÇÔÂµ½ÈÕµÄÉú²ú¼Æ»®£¬Òò´ËÔÂ¶ÈÉú²ú¼Æ»®ĞèÒª¼ÓÉÏÀúÊ·Êı¾İ£¬
+			2013-01-11ä¿®æ”¹ï¼Œç”±äºæœªåŠ è½½å­£åº¦ç”Ÿäº§è®¡åˆ’ï¼Œå¹´åº¦è®¡åˆ’å‡å»çš„å®é™…æ˜¯æœˆåˆ°æ—¥çš„ç”Ÿäº§è®¡åˆ’ï¼Œå› æ­¤æœˆåº¦ç”Ÿäº§è®¡åˆ’éœ€è¦åŠ ä¸Šå†å²æ•°æ®ï¼Œ
 			*/			
 			union all
             select pfphdm,year(jhrq) as jhnf,jhcl
@@ -311,7 +310,7 @@ begin
 			Union all
             select pfphdm,year(jhrq) as jhnf,jhcl_avg as jhcl
             from session.tmp2
-            --where month(jhrq)>6  --2013-01-11 ×¢ÊÍ £¬ÓÉÓÚÎ´¼ÓÔØ¼¾¶ÈÉú²ú¼Æ»®£¬Òò´Ë²»¶ÔÔÂµ½ÈÕµÄÉú²ú¼Æ»®×öÏŞÖÆ
+            --where month(jhrq)>6  --2013-01-11 æ³¨é‡Š ï¼Œç”±äºæœªåŠ è½½å­£åº¦ç”Ÿäº§è®¡åˆ’ï¼Œå› æ­¤ä¸å¯¹æœˆåˆ°æ—¥çš„ç”Ÿäº§è®¡åˆ’åšé™åˆ¶
           ) as a
           group by pfphdm,jhnf
         )
@@ -342,7 +341,7 @@ begin
 
 	  
 	  
-      --ÔÂ¼Æ»®µ½ÄêÄ©,²»ĞèÒª¼ÆËãÄê¼Æ»®Ê£Óà 
+      --æœˆè®¡åˆ’åˆ°å¹´æœ«,ä¸éœ€è¦è®¡ç®—å¹´è®¡åˆ’å‰©ä½™ 
       insert into session.tmp3(pfphdm,ksrq,jsrq,jhcl_avg) 
       with mhnjh_tmp as ( 
         select PFPHDM,rtrim(char(jhnf))||'-01-01' as ksrq, 
@@ -356,22 +355,10 @@ begin
       select pfphdm,ksrq,jsrq,(jhcl*1.00000)/(days(jsrq)-days(ksrq)+1) as jhcl_avg
       from mhnjh_tmp; 
     end if; 
-	
-	  
-
-
-	
-    --Äê¼Æ»®Äê·İ<ÔÂ¼Æ»®Äê·İ
-	
-	
-	
-		
-		
+    
+    --å¹´è®¡åˆ’å¹´ä»½<æœˆè®¡åˆ’å¹´ä»½
     if yr_2<yr_1 then 
-      
-
-	  
-	  delete from session.tmp3 where ksrq>=date(rtrim(char(yr_1))||'-01-01');
+      delete from session.tmp3 where ksrq>=date(rtrim(char(yr_1))||'-01-01');
       insert into session.tmp3(pfphdm,ksrq,jsrq,jhcl_avg)
       with mhnjh_tmp as ( 
         select PFPHDM, rtrim(char(jhnf))||'-01-01' as ksrq, 
@@ -392,75 +379,52 @@ begin
       select pfphdm,ksrq,jsrq,(jhcl*1.00000)/(days(jsrq)-days(ksrq)+1) as jhcl_avg 
       from mhnjh_tmp 
       where year(ksrq)>yr_1; 
-	  
-
-	  
     end if; 
     
-	
-
-	
-	 
-	
-    --»ã×ÜÊı¾İ£¬½øÈëÁÙÊ±±íyyzy.t_yyzy_tmp_rscjhb_whb
+    
+    --æ±‡æ€»æ•°æ®ï¼Œè¿›å…¥ä¸´æ—¶è¡¨yyzy.t_yyzy_tmp_rscjhb_whb
     insert into yyzy.t_yyzy_tmp_rscjhb_whb(pfphdm,ksrq,jsrq,jhcl_avg) 
     select pfphdm,ksrq,jsrq,jhcl_avg 
     from session.tmp3; 
     
-    --Íâ¼Ó¹¤ÎŞ·¨È¡µÄÔÂµ½ÈÕµÄ¼Æ»®Ä¬ÈÏÎªÃ¿ÌìÆ½Ì¯
+    --å¤–åŠ å·¥æ— æ³•å–çš„æœˆåˆ°æ—¥çš„è®¡åˆ’é»˜è®¤ä¸ºæ¯å¤©å¹³æ‘Š
     delete from yyzy.t_yyzy_tmp_rscjhb_whb 
     where pfphdm in ( 
       select PFPHDM 
       from DIM.T_DIM_YYZY_PFPH 
       where sccjdm in (4,5,6,7) and jsrq>=start_date 
     );
-	
-	--2013.4.10¸Ä£¬¼ÓÈëÍâ¼Ó¹¤Î¬»¤Êı¾İ
+
+    --2013.4.10æ”¹ï¼ŒåŠ å…¥å¤–åŠ å·¥ç»´æŠ¤æ•°æ®
     insert into yyzy.t_yyzy_tmp_rscjhb_whb(pfphdm,ksrq,jsrq,jhcl_avg)
     WITH PPGG AS (
-  select PPGGID, 
-	     JHNF, 
-		 CJMC, 
-		 CJDM, 
-		 PPMC, 
-		 PPDM, 
-		 YHBS, 
-		 JYGG, 
-		 CZR , 
-		 BBH, 
-		 BBRQ
-    from DIM.T_DIM_YYZY_WJGPPGG
-  WHERE (JHNF,CJDM,PPDM,YHBS,JYGG,BBH) IN (SELECT JHNF,CJDM,PPDM,YHBS,JYGG,MAX(BBH) FROM DIM.T_DIM_YYZY_WJGPPGG GROUP BY JHNF,CJDM,PPDM,YHBS,JYGG)
-  )
-,YSCJH_WJG_TMP AS (
-    select PPGGID, 
-		   JHNF, 
-		   JHYF, 
-		   JHCL, 
-		   ZSBJ, 
-		   CZR, 
-		   BBH, 
-		   BBRQ
+      select PPGGID, 
+        JHNF, CJMC, CJDM, PPMC, PPDM, YHBS, JYGG, CZR , BBH, BBRQ
+        from DIM.T_DIM_YYZY_WJGPPGG
+        WHERE (JHNF,CJDM,PPDM,YHBS,JYGG,BBH) IN (
+            SELECT JHNF,CJDM,PPDM,YHBS,JYGG,MAX(BBH) 
+            FROM DIM.T_DIM_YYZY_WJGPPGG 
+            GROUP BY JHNF,CJDM,PPDM,YHBS,JYGG
+          )
+    )
+    ,YSCJH_WJG_TMP AS (
+      select PPGGID, JHNF, JHYF, JHCL, ZSBJ, CZR, BBH, BBRQ
       from YYZY.T_YYZY_YSCJH_WJG
-     WHERE (PPGGID,JHNF,JHYF,BBH) IN (SELECT PPGGID,JHNF,JHYF,MAX(BBH) FROM YYZY.T_YYZY_YSCJH_WJG GROUP BY PPGGID,JHNF,JHYF)
-)
-,YSCJH_WJG AS (
-  select C.PFPHDM,
-  		 B.JHNF,
-  		 B.JHYF,
-		 DATE(RTRIM(CHAR(B.JHNF))||'-'||RTRIM(CHAR(B.JHYF))||'-01') + 1 MONTH - 1 DAY as JHRQ,
-		 A.CJDM,
-		 A.YHBS,
-		 SUM(B.JHCL) AS JHCL
-	FROM PPGG AS A,
-		 YSCJH_WJG_TMP AS B,
-		 DIM.T_DIM_YYZY_PFPH AS C
-   WHERE A.PPGGID=B.PPGGID
-     AND int(A.CJDM)=int(C.SCCJDM)
-	 AND A.YHBS=C.YHBS
-GROUP BY C.PFPHDM,B.JHNF,B.JHYF,A.CJDM,A.YHBS
-),
- snjh_wjg as ( 
+      WHERE (PPGGID,JHNF,JHYF,BBH) IN (SELECT PPGGID,JHNF,JHYF,MAX(BBH) FROM YYZY.T_YYZY_YSCJH_WJG GROUP BY PPGGID,JHNF,JHYF)
+    ) 
+    ,YSCJH_WJG AS (
+      select C.PFPHDM, B.JHNF, B.JHYF, 
+        DATE(RTRIM(CHAR(B.JHNF))||'-'||RTRIM(CHAR(B.JHYF))||'-01') + 1 MONTH - 1 DAY as JHRQ,
+        A.CJDM, A.YHBS, SUM(B.JHCL) AS JHCL 
+      FROM PPGG AS A,
+        YSCJH_WJG_TMP AS B,
+        DIM.T_DIM_YYZY_PFPH AS C
+      WHERE A.PPGGID=B.PPGGID
+        AND int(A.CJDM)=int(C.SCCJDM)
+        AND A.YHBS=C.YHBS
+      GROUP BY C.PFPHDM,B.JHNF,B.JHYF,A.CJDM,A.YHBS
+    )
+    , snjh_wjg as ( 
       select PFPHDM, PZMC, SCCJ, JHNF, JHCL, BBH
       from YYZY.T_YYZY_SNSCJH_ZXB
       where bbh in (select max(bbh) from YYZY.T_YYZY_SNSCJH_ZXB)
@@ -481,27 +445,27 @@ GROUP BY C.PFPHDM,B.JHNF,B.JHYF,A.CJDM,A.YHBS
         ) 
     )
     ,snjh_ksjs as (
-	  select a.pfphdm,date(rtrim(char(a.jhnf))||'-01-01')+(case when a.jhnf=year(start_date) then (dayofyear(start_date)-1) else 0 end) day as ksrq,
-          	 date(rtrim(char(a.jhnf))||'-12-31') as jsrq,
-          	 case when sum(a.jhcl-value(b.jhcl,0))>0 then sum(a.jhcl-value(b.jhcl,0)) else 0 end as jhcl
+      select a.pfphdm,date(rtrim(char(a.jhnf))||'-01-01')+(case when a.jhnf=year(start_date) then (dayofyear(start_date)-1) else 0 end) day as ksrq,
+        date(rtrim(char(a.jhnf))||'-12-31') as jsrq,
+        case when sum(a.jhcl-value(b.jhcl,0))>0 then sum(a.jhcl-value(b.jhcl,0)) else 0 end as jhcl
       from snjh_wjg as a
       left join lsjh as b
         on a.pfphdm=b.pfphdm and a.jhnf=b.jhnf 
       group by a.pfphdm,a.jhnf
-),
+    ),
     snjh_avg as ( 
-    	select B.pfphdm,
-		   A.RIQI AS KSRQ,
-		   A.RIQI AS JSRQ,		   
-		   B.jhcl*1.0000/(days(B.jsrq)-days(B.ksrq)+1)+VALUE(C.JHCL,0) as jhcl_avg 
-	  from DIM.T_DIM_YYZY_DATE AS A
-	  LEFT JOIN snjh_ksjs AS B 
-	    ON A.RIQI BETWEEN B.KSRQ AND B.JSRQ
-	  LEFT JOIN YSCJH_WJG AS C
-	    ON A.RIQI=C.JHRQ
-	   AND B.PFPHDM=C.PFPHDM
-	 WHERE A.RIQI BETWEEN B.KSRQ AND B.JSRQ 
-    )
+      select B.pfphdm,
+       A.RIQI AS KSRQ,
+       A.RIQI AS JSRQ,		   
+       B.jhcl*1.0000/(days(B.jsrq)-days(B.ksrq)+1)+VALUE(C.JHCL,0) as jhcl_avg 
+    from DIM.T_DIM_YYZY_DATE AS A
+    LEFT JOIN snjh_ksjs AS B 
+      ON A.RIQI BETWEEN B.KSRQ AND B.JSRQ
+    LEFT JOIN YSCJH_WJG AS C
+      ON A.RIQI=C.JHRQ
+     AND B.PFPHDM=C.PFPHDM
+   WHERE A.RIQI BETWEEN B.KSRQ AND B.JSRQ 
+   )
 ,PX AS(
     select pfphdm,ksrq,jsrq,jhcl_avg
     from snjh_avg 
@@ -510,7 +474,7 @@ GROUP BY C.PFPHDM,B.JHNF,B.JHYF,A.CJDM,A.YHBS
     select pfphdm,ksrq,jsrq,jhcl_avg
     from snjh_avg 
     where ksrq>=current date+1 year-dayofyear(current date +1 year) day+1 day)
-	--Êı¾İÕûºÏ
+	--æ•°æ®æ•´åˆ
 ,PX1 AS(
 	SELECT 
 	PFPHDM,
@@ -556,7 +520,7 @@ SELECT PFPHDM,KSRQ,JSRQ,JHCL_AVG FROM SJHB1
     
 	
 	
-    --¸üĞÂÅú´Î
+    --æ›´æ–°æ‰¹æ¬¡
     update yyzy.t_yyzy_tmp_rscjhb_whb e 
     set jhpc_avg=( 
       select round(a.jhcl_avg/b.dpcl,2) as jhpc_avg
@@ -576,7 +540,7 @@ SELECT PFPHDM,KSRQ,JSRQ,JHCL_AVG FROM SJHB1
     
 	
 	
-    --¸üĞÂÅú´Î
+    --æ›´æ–°æ‰¹æ¬¡
     update session.tmp2 e 
     set jhpc_avg=( 
       select round(a.jhcl_avg/b.dpcl,2) as jhpc_avg
@@ -597,7 +561,7 @@ SELECT PFPHDM,KSRQ,JSRQ,JHCL_AVG FROM SJHB1
 	
 
 
---¹£Åò¶¯Ì¬¼ÆËã±äÁ¿¸³Öµ
+--æ¢—è†¨åŠ¨æ€è®¡ç®—å˜é‡èµ‹å€¼
 SET v_gengpeng_jm='';				
 SET v_gengpeng_gs='';
 SET v_gengpeng_cx='';
@@ -623,7 +587,7 @@ SELECT 'cast(decrypt_char(B.'||A.NAME||',yyzy.f_yyzy_myjm()) as decimal(10, 2)) 
 	) AS A;
 	
 	
-    --ÔÚÈÕÉú²ú¼Æ»®ÖĞ¼ÓÈë¹£ÅòË¿ 
+    --åœ¨æ—¥ç”Ÿäº§è®¡åˆ’ä¸­åŠ å…¥æ¢—è†¨ä¸ 
     set i_not_found=0; 
     open c1;
       loop_ml: loop 
@@ -698,7 +662,7 @@ SET EXE_SQL='
     close c1; 
     
 	  	
-    --µÃµ½Ò»¸öÁ¬ĞøµÄÏµÁĞÖµ
+    --å¾—åˆ°ä¸€ä¸ªè¿ç»­çš„ç³»åˆ—å€¼
     insert into yyzy.t_yyzy_tmp_rscjhb_whb(pfphdm,ksrq,jsrq,jhcl_avg,jhpc_avg)
     with temp as(
       select riqi as jhrq,'x' as gl 
@@ -782,9 +746,9 @@ SET EXE_SQL='
     select pfphdm,ksrq,jsrq,jhcl_avg,jhpc_avg 
     from yyzy.t_yyzy_tmp_rscjhb_whb;
     
-	/*2012-04-06ĞŞ¸Äbug*/
+	/*2012-04-06ä¿®æ”¹bug*/
     /* 
-      ÖĞ¶ÏÊ±¼ä¶ÎµÄ²»È«Ëã·¨
+      ä¸­æ–­æ—¶é—´æ®µçš„ä¸å…¨ç®—æ³•
      */
 	 set v_ksrq = judge_time;
      select max(jsrq) into v_jsrq from yyzy.t_yyzy_tmp_rscjhb_whb;
@@ -841,7 +805,7 @@ SET EXE_SQL='
        if i_not_found=1   then
           leave loop_mt;
        end if;
-       --Ğé¹¹¹¤×÷ÈÕ£¬²¢µ¼ÈëÕıÊ½±íyyzy.t_yyzy_rscjhb_whb
+       --è™šæ„å·¥ä½œæ—¥ï¼Œå¹¶å¯¼å…¥æ­£å¼è¡¨yyzy.t_yyzy_rscjhb_whb
        insert into yyzy.t_yyzy_rscjhb_whb(pfphdm,ksrq,jsrq,jhcl_avg,jhpc_avg) 
        with tmp as (
          select distinct pfphdm
@@ -872,9 +836,9 @@ SET EXE_SQL='
     end loop  loop_mt;
     close c2; 
 */
-	/* upon 2012-04-06ĞŞ¸Äbug*/
+	/* upon 2012-04-06ä¿®æ”¹bug*/
     
-  /*¸ù¾İÇ°Ì¨Î¬»¤Ã¿Äê²úÁ¿µÄÔö³¤ÂÊ£¬ÖğÄê¼ÆËã²úÁ¿*/
+  /*æ ¹æ®å‰å°ç»´æŠ¤æ¯å¹´äº§é‡çš„å¢é•¿ç‡ï¼Œé€å¹´è®¡ç®—äº§é‡*/
   open c3;
   cl_zzl:loop
     set i_not_found=0;
@@ -911,7 +875,7 @@ SET EXE_SQL='
       and a.pfphdm not in (16,23,24,63)
     ;
     
-	/*  --2012Äê11ÔÂ28ÈÕĞŞ¸Ä,¹ıÂËµôÌì½ò¾íÑÌ³§Éú²úµÄÅòË¿Êı¾İ.¹£Ë¿Êı¾İ²»±ä,Ïê¼ûÏÂÒ»¶ÎSQL
+	/*  --2012å¹´11æœˆ28æ—¥ä¿®æ”¹,è¿‡æ»¤æ‰å¤©æ´¥å·çƒŸå‚ç”Ÿäº§çš„è†¨ä¸æ•°æ®.æ¢—ä¸æ•°æ®ä¸å˜,è¯¦è§ä¸‹ä¸€æ®µSQL
     insert into yyzy.t_yyzy_rscjhb_whb(pfphdm,ksrq,jsrq,jhcl_avg)
     with xhyzl(pfphdm,jsdm,ksrq,jsrq,xhyzl) as 
     (
@@ -975,9 +939,9 @@ SET EXE_SQL='
     select 24 as pfphdm,ksrq,jsrq,pengsi2 from tmp1
     ;
     */
-	/* 2013-05-15ĞŞ¸Ä,½«¸Ã¶Î½Å±¾ĞŞ¸ÄÎª¶¯Ì¬SQL,Ïê¼ûÏÂÒ»¶ÎSQL
+	/* 2013-05-15ä¿®æ”¹,å°†è¯¥æ®µè„šæœ¬ä¿®æ”¹ä¸ºåŠ¨æ€SQL,è¯¦è§ä¸‹ä¸€æ®µSQL
 	insert into yyzy.t_yyzy_rscjhb_whb(pfphdm,ksrq,jsrq,jhcl_avg)
-	with gsxhyzl(pfphdm,jsdm,ksrq,jsrq,gsxhyzl) as   --¹£Ë¿¼ÆËã
+	with gsxhyzl(pfphdm,jsdm,ksrq,jsrq,gsxhyzl) as   --æ¢—ä¸è®¡ç®—
     (
       select 
         x.pfphdm,y.jsdm,
@@ -1028,7 +992,7 @@ SET EXE_SQL='
         ) c
       where a.pfphdm = c.pfphdm 
       group by ksrq,jsrq
-    ),psxhyzl(pfphdm,jsdm,ksrq,jsrq,psxhyzl) as   --ÅòË¿¼ÆËã,¹ıÂËÌì½ò¾íÑÌ³§ÅÆºÅ
+    ),psxhyzl(pfphdm,jsdm,ksrq,jsrq,psxhyzl) as   --è†¨ä¸è®¡ç®—,è¿‡æ»¤å¤©æ´¥å·çƒŸå‚ç‰Œå·
     (
       select 
         x.pfphdm,y.jsdm,
@@ -1040,19 +1004,19 @@ SET EXE_SQL='
           select pfphdm,ksrq,jhcl_avg,jhpc_avg 
           from yyzy.t_yyzy_rscjhb_whb 
           where ksrq=new_ksrq
-		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --¹ıÂËÌì½ò¾íÑÌ³§ÅÆºÅ
+		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --è¿‡æ»¤å¤©æ´¥å·çƒŸå‚ç‰Œå·
         ) as x,
         (
           select pfphdm,jsdm,ksrq,jsrq,dpxs as pfbs 
           from yyzy.t_yyzy_jstz_whb 
           where zybj='1'
-		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --¹ıÂËÌì½ò¾íÑÌ³§ÅÆºÅ
+		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --è¿‡æ»¤å¤©æ´¥å·çƒŸå‚ç‰Œå·
         ) as y,
         (
           select pfphdm,dpcl 
           from yyzy.t_yyzy_dpclb 
           where (pfphdm,nf*100+yf)in(select pfphdm,max(nf*100+yf) from yyzy.t_yyzy_dpclb group by pfphdm)
-		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --¹ıÂËÌì½ò¾íÑÌ³§ÅÆºÅ
+		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --è¿‡æ»¤å¤©æ´¥å·çƒŸå‚ç‰Œå·
         ) as d
       where x.pfphdm = y.pfphdm 
         and x.ksrq between y.ksrq and y.jsrq 
@@ -1090,7 +1054,7 @@ SET EXE_SQL='
 	*/
 	
 	
---¹£Åò¶¯Ì¬¼ÆËã±äÁ¿¸³Öµ
+--æ¢—è†¨åŠ¨æ€è®¡ç®—å˜é‡èµ‹å€¼
 SET v_gengpeng_jm='';				
 SET v_gengpeng_gs='';
 SET v_gengpeng_cx='';
@@ -1117,40 +1081,40 @@ SELECT REPLACE(replace(xml2clob(xmlagg(xmlelement(name a, ','||A.GENG_JM))),'</A
   (
 SELECT case when A.name like 'GENG%' OR A.NAME LIKE 'geng%' then 'cast(decrypt_char(B.'||A.NAME||',yyzy.f_yyzy_myjm()) as decimal(10, 2)) as '||A.NAME 
        end AS GENG_JM,
-	   
-	   case when A.name like 'PENG%' OR A.NAME LIKE 'peng%' then 'cast(decrypt_char(B.'||A.NAME||',yyzy.f_yyzy_myjm()) as decimal(10, 2)) as '||A.NAME 
+     
+     case when A.name like 'PENG%' OR A.NAME LIKE 'peng%' then 'cast(decrypt_char(B.'||A.NAME||',yyzy.f_yyzy_myjm()) as decimal(10, 2)) as '||A.NAME 
        end AS PENG_JM,
-	   
-	   case when A.name like 'GENG%' OR A.NAME LIKE 'geng%' then 'ceil(sum(gsxhyzl*1.000 / yansi * '||A.NAME||'/0.96)*4) as '||A.NAME
-	   end AS GENG_GS,
-	   
-	   case when A.name like 'PENG%' OR A.NAME like 'peng%'then 'ceil(sum(psxhyzl*1.000 / yansi * '||A.NAME||')/0.95) as '||A.NAME
-	   end AS PENG_GS,
-	   
-	   case when A.name like 'GENG%' OR A.NAME LIKE 'geng%' then ' SELECT '||RTRIM(CHAR(B.PFPHDM))||' AS PFPHDM,KSRQ,JSRQ,'||A.NAME||' from tmp1 ' 
-	   end AS GENG_CX,
-	   
-	   case when A.name like 'PENG%' OR A.NAME LIKE 'peng%' then ' SELECT '||RTRIM(CHAR(B.PFPHDM))||' AS PFPHDM,KSRQ,JSRQ,'||A.NAME||' from tmp2 ' 
-	   end AS PENG_CX 
-	   
-	  FROM sysibm.syscolumns as a,YYZY.T_YYZY_PFPH_CFG as b 
-	 WHERE A.NAME=B.YSJGLM
-	   AND TBNAME='T_DIM_YYZY_YSJGB_KZB' 
-	   AND TBCREATOR='DIM'
-	   AND (NAME LIKE 'GENG%' OR NAME LIKE 'PENG%')  
-	   AND NAME NOT IN ('PFPHDM', 'BBH', 'ZDMC', 'ZDZ', 'ZDPFPH', 'TJRQ')
-	) AS A
-	) AS A
-	;
-	
+     
+     case when A.name like 'GENG%' OR A.NAME LIKE 'geng%' then 'ceil(sum(gsxhyzl*1.000 / yansi * '||A.NAME||'/0.96)*4) as '||A.NAME
+     end AS GENG_GS,
+     
+     case when A.name like 'PENG%' OR A.NAME like 'peng%'then 'ceil(sum(psxhyzl*1.000 / yansi * '||A.NAME||')/0.95) as '||A.NAME
+     end AS PENG_GS,
+     
+     case when A.name like 'GENG%' OR A.NAME LIKE 'geng%' then ' SELECT '||RTRIM(CHAR(B.PFPHDM))||' AS PFPHDM,KSRQ,JSRQ,'||A.NAME||' from tmp1 ' 
+     end AS GENG_CX,
+     
+     case when A.name like 'PENG%' OR A.NAME LIKE 'peng%' then ' SELECT '||RTRIM(CHAR(B.PFPHDM))||' AS PFPHDM,KSRQ,JSRQ,'||A.NAME||' from tmp2 ' 
+     end AS PENG_CX 
+     
+    FROM sysibm.syscolumns as a,YYZY.T_YYZY_PFPH_CFG as b 
+   WHERE A.NAME=B.YSJGLM
+     AND TBNAME='T_DIM_YYZY_YSJGB_KZB' 
+     AND TBCREATOR='DIM'
+     AND (NAME LIKE 'GENG%' OR NAME LIKE 'PENG%')  
+     AND NAME NOT IN ('PFPHDM', 'BBH', 'ZDMC', 'ZDZ', 'ZDPFPH', 'TJRQ')
+  ) AS A
+  ) AS A
+  ;
+  
 
 SET EXE_SQL='	
-	insert into yyzy.t_yyzy_rscjhb_whb(pfphdm,ksrq,jsrq,jhcl_avg)
-	with gsxhyzl(pfphdm,jsdm,ksrq,jsrq,gsxhyzl) as   --¹£Ë¿¼ÆËã
+  insert into yyzy.t_yyzy_rscjhb_whb(pfphdm,ksrq,jsrq,jhcl_avg)
+  with gsxhyzl(pfphdm,jsdm,ksrq,jsrq,gsxhyzl) as   --æ¢—ä¸è®¡ç®—
     (
       select 
         x.pfphdm,y.jsdm,
-		date('''||rtrim(char(new_ksrq))||''') as ksrq ,
+    date('''||rtrim(char(new_ksrq))||''') as ksrq ,
         (date('''||rtrim(char(new_ksrq))||''')+1 year -1 day)as jsrq,
         (x.jhcl_avg/dpcl) * y.pfbs as gsxhyzl
       from 
@@ -1181,7 +1145,7 @@ SET EXE_SQL='
       select 
         ksrq,jsrq,
         ceil(sum(gsxhyzl*1.000/yansi * gengsi/0.96)*4) as ghyxsl
-		'||v_gengpeng_gs||'
+    '||v_gengpeng_gs||'
       from 
         gsxhyzl a,
         (
@@ -1189,16 +1153,16 @@ SET EXE_SQL='
             a.pfphdm,
             cast(decrypt_char(a.yansi, yyzy.f_yyzy_myjm()) as decimal(10, 2)) as yansi,
             cast(decrypt_char(a.gengsi,yyzy.f_yyzy_myjm()) as decimal(10, 2)) as gengsi
-			'||v_gengpeng_jm||'
+      '||v_gengpeng_jm||'
           from dim.t_dim_yyzy_ysjgb as a
-		  left join (SELECT * FROM DIM.T_DIM_YYZY_YSJGB_KZB AS T WHERE (T.pfphdm,T.BBH) in (select pfphdm,max(bbh) from DIM.T_DIM_YYZY_YSJGB_KZB group by pfphdm)) AS B
-			  on a.pfphdm=b.pfphdm
+      left join (SELECT * FROM DIM.T_DIM_YYZY_YSJGB_KZB AS T WHERE (T.pfphdm,T.BBH) in (select pfphdm,max(bbh) from DIM.T_DIM_YYZY_YSJGB_KZB group by pfphdm)) AS B
+        on a.pfphdm=b.pfphdm
           where jsrq>current date 
             and (a.pfphdm,a.bbh) in (select pfphdm,max(bbh) from dim.t_dim_yyzy_ysjgb group by pfphdm)
         ) c
       where a.pfphdm = c.pfphdm 
       group by ksrq,jsrq
-    ),psxhyzl(pfphdm,jsdm,ksrq,jsrq,psxhyzl) as   --ÅòË¿¼ÆËã,¹ıÂËÌì½ò¾íÑÌ³§ÅÆºÅ
+    ),psxhyzl(pfphdm,jsdm,ksrq,jsrq,psxhyzl) as   --è†¨ä¸è®¡ç®—,è¿‡æ»¤å¤©æ´¥å·çƒŸå‚ç‰Œå·
     (
       select 
         x.pfphdm,y.jsdm,
@@ -1210,19 +1174,19 @@ SET EXE_SQL='
           select pfphdm,ksrq,jhcl_avg,jhpc_avg 
           from yyzy.t_yyzy_rscjhb_whb 
           where ksrq=date('''||rtrim(char(new_ksrq))||''')
-		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --¹ıÂËÌì½ò¾íÑÌ³§ÅÆºÅ
+        and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --è¿‡æ»¤å¤©æ´¥å·çƒŸå‚ç‰Œå·
         ) as x,
         (
           select pfphdm,jsdm,ksrq,jsrq,dpxs as pfbs 
           from yyzy.t_yyzy_jstz_whb 
           where zybj=''1''
-		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --¹ıÂËÌì½ò¾íÑÌ³§ÅÆºÅ
+        and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --è¿‡æ»¤å¤©æ´¥å·çƒŸå‚ç‰Œå·
         ) as y,
         (
           select pfphdm,dpcl 
           from yyzy.t_yyzy_dpclb 
           where (pfphdm,nf*100+yf)in(select pfphdm,max(nf*100+yf) from yyzy.t_yyzy_dpclb group by pfphdm)
-		    and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --¹ıÂËÌì½ò¾íÑÌ³§ÅÆºÅ
+        and pfphdm not in (select PFPHDM from DIM.T_DIM_YYZY_PFPH where sccjdm=4 and jsrq>current date)  --è¿‡æ»¤å¤©æ´¥å·çƒŸå‚ç‰Œå·
         ) as d
       where x.pfphdm = y.pfphdm 
         and x.ksrq between y.ksrq and y.jsrq 
@@ -1242,10 +1206,10 @@ SET EXE_SQL='
             cast(decrypt_char(a.yansi, yyzy.f_yyzy_myjm()) as decimal(10, 2)) as yansi,
             cast(decrypt_char(a.pengsi1,yyzy.f_yyzy_myjm()) as decimal(10, 2)) as pengsi1,
             cast(decrypt_char(a.pengsi2,yyzy.f_yyzy_myjm()) as decimal(10, 2)) as pengsi2
-			'||v_gengpeng_jm_p||'
+      '||v_gengpeng_jm_p||'
           from dim.t_dim_yyzy_ysjgb as a
-		  left join (SELECT * FROM DIM.T_DIM_YYZY_YSJGB_KZB AS T WHERE (T.pfphdm,T.BBH) in (select pfphdm,max(bbh) from DIM.T_DIM_YYZY_YSJGB_KZB group by pfphdm)) AS B
-			  on a.pfphdm=b.pfphdm
+      left join (SELECT * FROM DIM.T_DIM_YYZY_YSJGB_KZB AS T WHERE (T.pfphdm,T.BBH) in (select pfphdm,max(bbh) from DIM.T_DIM_YYZY_YSJGB_KZB group by pfphdm)) AS B
+        on a.pfphdm=b.pfphdm
           where a.jsrq>current date 
             and (a.pfphdm,a.bbh) in (select pfphdm,max(bbh) from dim.t_dim_yyzy_ysjgb group by pfphdm)
         ) c
@@ -1261,9 +1225,9 @@ SET EXE_SQL='
 	'||v_gengpeng_cx_p||'
 	';
 
-	  PREPARE s0 FROM EXE_SQL;
-	  EXECUTE s0;	
-	
+    PREPARE s0 FROM EXE_SQL; 
+    EXECUTE s0; 
+
   end loop;
   close c3;
   
@@ -1274,7 +1238,7 @@ SET EXE_SQL='
     where new_ksrq- 1 year between ksrq and jsrq;
   */
     
-    -- 2013-09-10 ĞÂÔö£¬´¦ÀíÍâ¼Ó¹¤ÔÚÉÏº£ÖÆË¿µÄÔÂÉú²ú¼Æ»®
+    -- 2013-09-10 æ–°å¢ï¼Œå¤„ç†å¤–åŠ å·¥åœ¨ä¸Šæµ·åˆ¶ä¸çš„æœˆç”Ÿäº§è®¡åˆ’
     call YYZY.P_YYZY_RSCJH_WJGPHZS(START_DATE);
     
     update yyzy.t_yyzy_rscjhb_whb
@@ -1288,7 +1252,7 @@ SET EXE_SQL='
     update yyzy.t_yyzy_rscjhb_whb
     set bbrq=(select MAX(date(d_createtime)) from hds_cxqj.n_cxqj_o_prodplanhist_n);
     
-    --¸üĞÂÅú´Î
+    --æ›´æ–°æ‰¹æ¬¡
     update yyzy.t_yyzy_rscjhb_whb e 
     set jhpc_avg=( 
       select round(a.jhcl_avg/b.dpcl,2) as jhpc_avg
@@ -1306,17 +1270,37 @@ SET EXE_SQL='
       where (e.pfphdm,e.ksrq,e.jsrq)=(a.pfphdm,a.ksrq,a.jsrq)
     );
     
-    --¹£Åú´Î²»ÕıÈ·
+    --2013å¹´09æœˆ13æ—¥å¢åŠ ï¼Œå¤„ç†æ¢—è†¨æ•°æ®
+    call YYZY.P_YYZY_RSCJH_GP(START_DATE);
+    
+    --æ›´æ–°æ‰¹æ¬¡
+    update yyzy.t_yyzy_rscjhb_whb e 
+    set jhpc_avg=( 
+      select round(a.jhcl_avg/b.dpcl,2) as jhpc_avg
+      from yyzy.t_yyzy_rscjhb_whb a 
+      left join (
+        select pfphdm,dpcl 
+        from yyzy.t_yyzy_dpclb 
+        where (pfphdm,nf*100+yf)in( 
+          select pfphdm,max(nf*100+yf) 
+          from yyzy.t_yyzy_dpclb 
+          group by pfphdm
+        )
+      ) b
+        on a.pfphdm=b.pfphdm
+      where (e.pfphdm,e.ksrq,e.jsrq)=(a.pfphdm,a.ksrq,a.jsrq)
+    );
+    
+    --æ¢—æ‰¹æ¬¡ä¸æ­£ç¡®
     update yyzy.t_yyzy_rscjhb_whb 
     set jhpc_avg=cast(null as decimal(10,2)) 
     where pfphdm IN (select PFPHDM from YYZY.T_YYZY_PFPH_CFG WHERE GPBJ='1' AND JSBJ='0'); 
-	
     
 end;
 
-GRANT EXECUTE ON PROCEDURE "APP_YYB"."P_YYZY_JHJZ_R"
+GRANT EXECUTE ON PROCEDURE APP_YYB.P_YYZY_JHJZ_R
  (DATE, 
   VARCHAR(1000)
  ) 
-  TO USER "ETLUSR" WITH GRANT OPTION;
+  TO USER ETLUSR WITH GRANT OPTION;
 
