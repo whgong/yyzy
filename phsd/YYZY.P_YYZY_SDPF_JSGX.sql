@@ -1,4 +1,4 @@
---drop PROCEDURE YYZY.P_YYZY_SDPF_JSGX;
+drop PROCEDURE YYZY.P_YYZY_SDPF_JSGX;
 SET SCHEMA = ETLUSR;
 SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,ETLUSR;
 
@@ -98,7 +98,7 @@ BEGIN ATOMIC
   delete from session.jsbhd;
   delete from session.T_YYZY_RSCJHB_WHB;
 -------------------------------------------------------------------------------------------
-  --»ñµÃ¼Æ»®¸üĞÂÇ°Åú´ÎĞòÁĞ
+  --è·å¾—è®¡åˆ’æ›´æ–°å‰æ‰¹æ¬¡åºåˆ—
   insert into session.scpcxl_o(pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, pcs_ks, pcs_js)
   with tb_scpc as (
     select PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG, (days(jsrq)-days(ksrq)+1)*jhpc_avg as pczs
@@ -124,7 +124,14 @@ BEGIN ATOMIC
         select pfphdm, min(ksrq) from YYZY.T_YYZY_TMP_RSCJHB_WHB_PRI group by pfphdm
       ) as k(pfphdm, ksrq)
         on m.pfphdm = k.pfphdm
-    where date(tlsj)<k.ksrq
+    where date(m.tlsj)<k.ksrq
+      AND DATE(m.TLSJ)>=(
+          SELECT DATE(CSZ)
+          FROM YYZY.T_YYZY_STCS
+          WHERE CSMC = 'ZSPFFSQSRQ'
+          FETCH FIRST 1 ROW ONLY
+        )
+        --bug å·²å¤„ç† æŠ•æ–™æ•°æ®çš„èµ·å§‹æ—¶é—´
     group by m.pfphdm
   )
   select m.pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, 
@@ -134,7 +141,7 @@ BEGIN ATOMIC
       on m.pfphdm = y.pfphdm
   ;
   
-  --»ñµÃ¼Æ»®¸üĞÂºóÅú´ÎĞòÁĞ
+  --è·å¾—è®¡åˆ’æ›´æ–°åæ‰¹æ¬¡åºåˆ—
   insert into session.scpcxl_n(pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, pcs_ks, pcs_js)
   with tb_scpc as (
     select PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG, (days(jsrq)-days(ksrq)+1)*jhpc_avg as pczs
@@ -161,6 +168,13 @@ BEGIN ATOMIC
       ) as k(pfphdm, ksrq)
         on m.pfphdm = k.pfphdm
     where date(tlsj)<k.ksrq
+      AND DATE(m.TLSJ)>=(
+          SELECT DATE(CSZ)
+          FROM YYZY.T_YYZY_STCS
+          WHERE CSMC = 'ZSPFFSQSRQ'
+          FETCH FIRST 1 ROW ONLY
+        )
+        --bug å·²å¤„ç† æŠ•æ–™æ•°æ®çš„èµ·å§‹æ—¶é—´
     group by m.pfphdm
   )
   select m.pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, 
@@ -170,7 +184,7 @@ BEGIN ATOMIC
       on m.pfphdm = y.pfphdm
   ;
 ----------------------------------------------------------------------------------
-  --»ñµÃĞè´¦ÀíµÄÊ±¼ä·¶Î§
+  --è·å¾—éœ€å¤„ç†çš„æ—¶é—´èŒƒå›´
   insert into session.sjfw(pfphdm, ksrq, jsrq, jspc)
 --  with sdpcs as (
 --    select pfphdm, max(jspcs) as jspcs
@@ -198,7 +212,7 @@ BEGIN ATOMIC
 --      and sd.JSPCS between sc.pcs_ks and sc.pcs_js
 --  ;
   with sdpcs as (
-    select pfphdm, max(jspcs) as jspcs --»ñµÃËø¶¨²¿·ÖµÄ½áÊøÅú´Î
+    select pfphdm, max(jspcs) as jspcs --è·å¾—é”å®šéƒ¨åˆ†çš„ç»“æŸæ‰¹æ¬¡
     from YYZY.T_YYZY_PFDXXB
     where (pfphdm, nf, yf, bbh)in(
         select pfphdm, nf, yf, max(bbh)
@@ -208,7 +222,7 @@ BEGIN ATOMIC
     group by pfphdm
   )
   , sdpcs_kspcrq as (
-    select m.pfphdm, m.jspcs, r.ksrq --Ëø¶¨²¿·ÖµÄ¿ªÊ¼ÈÕÆÚ
+    select m.pfphdm, m.jspcs, r.ksrq --é”å®šéƒ¨åˆ†çš„å¼€å§‹æ—¥æœŸ
     from sdpcs as m
       left join (
         select pfphdm, min(ksrq) as ksrq
@@ -216,7 +230,7 @@ BEGIN ATOMIC
       ) as r on m.pfphdm = r.pfphdm
   )
   select sc.pfphdm, sd.ksrq, 
-    sc.ksrq + ((jspcs - pcs_ks) / jhpc_avg) day as jsrq, --Ëø¶¨½áÊøÅú´ÎºÅËùÔÚÈÕÆÚ
+    sc.ksrq + ((jspcs - pcs_ks) / jhpc_avg) day as jsrq, --é”å®šç»“æŸæ‰¹æ¬¡å·æ‰€åœ¨æ—¥æœŸ
     sd.jspcs as jspc
   from session.scpcxl_n as sc
     inner join sdpcs_kspcrq as sd 
@@ -225,7 +239,7 @@ BEGIN ATOMIC
   order by 1,2,3 
   ;
   
-  --»ñÈ¡Ô­Ê¼Ê±¼ä·¶Î§
+  --è·å–åŸå§‹æ—¶é—´èŒƒå›´
   insert into session.sjfw_o(pfphdm, ksrq, jsrq, jspc)
   with sdpcs as (
     select pfphdm, max(jspcs) as jspcs
@@ -276,27 +290,27 @@ BEGIN ATOMIC
 --  ;
 
 ---------------------------------------------------------------------------------
-  --»ñÈ¡½ÇÉ«±ä»¯µãĞÅÏ¢
+  --è·å–è§’è‰²å˜åŒ–ç‚¹ä¿¡æ¯
   insert into session.jsbhd(pfphdm, rq_o, pc_o, rq_n, pc_n)
-  with jstz_bhrq as ( --½ÇÉ«±ä»¯¿ªÊ¼ÈÕÆÚ
-    select DISTINCT pfphdm, KSRQ as bhrq --ËÑË÷¿ªÊ¼µãÔÚ·¶Î§ÄÚµÄ½ÇÉ«±ä»¯µã
+  with jstz_bhrq as ( --è§’è‰²å˜åŒ–å¼€å§‹æ—¥æœŸ
+    select DISTINCT pfphdm, jsrq as bhrq --æœç´¢å¼€å§‹ç‚¹åœ¨èŒƒå›´å†…çš„è§’è‰²å˜åŒ–ç‚¹
     from YYZY.T_YYZY_JSTZ_WHB as m
     where exists (
           select 1
           from session.sjfw
           where pfphdm = m.pfphdm 
-            and m.ksrq between ksrq and jsrq
+            and m.jsrq between ksrq and jsrq
         ) 
       and zybj = '1' 
   )
-  , jstz_yspc as ( --½ÇÉ«±ä»¯¿ªÊ¼ÈÕÆÚ -> ½ÇÉ«Ô­Ê¼±ä»¯Åú´ÎºÅ
-    select m.pfphdm, m.bhrq, pcs_ks + jhpc_avg*(days(m.bhrq - 1 day)-days(ksrq)+1) as bhpc
+  , jstz_yspc as ( --è§’è‰²å˜åŒ–å¼€å§‹æ—¥æœŸ -> è§’è‰²åŸå§‹å˜åŒ–æ‰¹æ¬¡å·
+    select m.pfphdm, m.bhrq, pcs_ks + jhpc_avg*(days(m.bhrq)-days(ksrq)+1) -1 as bhpc
     from jstz_bhrq as m
       left join session.scpcxl_o as c
         on m.pfphdm = c.pfphdm 
         and m.bhrq between c.ksrq and c.jsrq
   )
-  , jstz_gxrq as ( --Ô­Ê¼±ä»¯Åú´ÎºÅ -> ¼Æ»®µ÷Õûºó½ÇÉ«±ä»¯Åú´ÎºÅ¶ÔÓ¦ÈÕÆÚ
+  , jstz_gxrq as ( --åŸå§‹å˜åŒ–æ‰¹æ¬¡å· -> è®¡åˆ’è°ƒæ•´åè§’è‰²å˜åŒ–æ‰¹æ¬¡å·å¯¹åº”æ—¥æœŸ
     select m.pfphdm, m.bhrq as bhrq_o, m.bhpc, 
       ksrq + int((m.bhpc - pcs_ks)/jhpc_avg) day as bhrq_n
     from jstz_yspc as m
@@ -304,16 +318,16 @@ BEGIN ATOMIC
         on m.pfphdm = c.pfphdm 
         and m.bhpc between c.pcs_ks and c.pcs_js
   )
-  , jstz_gxrq1 as ( --³¬³ö·¶Î§µÄ²¿·ÖÍ³Ò»ÒÆ¶¯ÖÁ·¶Î§±ß½ç
+  , jstz_gxrq1 as ( --è¶…å‡ºèŒƒå›´çš„éƒ¨åˆ†ç»Ÿä¸€ç§»åŠ¨è‡³èŒƒå›´è¾¹ç•Œ
     select m.pfphdm, bhrq_o, bhpc, 
       (case when bhrq_n>=f.jsrq then f.jsrq else bhrq_n end) as bhrq_n 
     from jstz_gxrq as m 
       left join session.sjfw as f 
         on m.pfphdm = f.pfphdm 
   ) 
-  -- ¼Æ»®µ÷Õûºó½ÇÉ«±ä»¯Åú´Îµã¶ÔÓ¦ÈÕÆÚ -> µ÷Õû½ÇÉ«ºóÅú´ÎºÅ
+  -- è®¡åˆ’è°ƒæ•´åè§’è‰²å˜åŒ–æ‰¹æ¬¡ç‚¹å¯¹åº”æ—¥æœŸ -> è°ƒæ•´è§’è‰²åæ‰¹æ¬¡å·
   select m.pfphdm, m.bhrq_o, m.bhpc as bhpc_o, m.bhrq_n,
-    pcs_ks + jhpc_avg*(days(m.bhrq_n - 1 day)-days(ksrq)+1) as bhpc_n
+    pcs_ks + jhpc_avg*(days(m.bhrq_n)-days(ksrq)+1) - 1 as bhpc_n
   from jstz_gxrq1 as m
     left join session.scpcxl_n as c
       on m.pfphdm = c.pfphdm
@@ -323,9 +337,9 @@ BEGIN ATOMIC
   delete from session.jsbhd where rq_o = rq_n and pc_o = pc_n;
   
 ----------------------------------------------------------------------------'
-  --?Ğè¸ÄÎªĞÂÔö°æ±¾µÄ·½Ê½
-  --¸üĞÂ½ÇÉ«
-  --´ı´¦ÀíÎÊÌâ, ³¬³öÔ­·¶Î§µÄ±ä»¯µãÍ³Ò»¸üĞÂÎª×îºóÅú´ÎºÅµÄÊ±¼ä
+  --?éœ€æ”¹ä¸ºæ–°å¢ç‰ˆæœ¬çš„æ–¹å¼
+  --æ›´æ–°è§’è‰²
+  --å¾…å¤„ç†é—®é¢˜, è¶…å‡ºåŸèŒƒå›´çš„å˜åŒ–ç‚¹ç»Ÿä¸€æ›´æ–°ä¸ºæœ€åæ‰¹æ¬¡å·çš„æ—¶é—´
   lp1:
   for v1 as c1 cursor for
       select m.pfphdm, m.rq_o, m.rq_n, 
@@ -339,14 +353,14 @@ BEGIN ATOMIC
   do
     if v1.rq_o <= jsrqo then 
       update YYZY.T_YYZY_JSTZ_WHB as tgt 
-      set ksrq = v1.rq_n 
-      where pfphdm = v1.pfphdm and ksrq = rq_o 
+      set ksrq = v1.rq_n + 1 day 
+      where pfphdm = v1.pfphdm and ksrq = rq_o + 1 day 
       ;
       update YYZY.T_YYZY_JSTZ_WHB as tgt 
-      set jsrq = v1.rq_n - 1 day 
-      where pfphdm = v1.pfphdm and jsrq = rq_o - 1 day 
+      set jsrq = v1.rq_n 
+      where pfphdm = v1.pfphdm and jsrq = rq_o 
       ;
-    else 
+    elseif v1.rq_o > jsrqo then 
 --      delete from YYZY.T_YYZY_JSTZ_WHB 
 --      where pfphdm = v1.pfphdm and ksrq>=v1.jsrqo and jsrq<=v1.jsrqn 
 --      ;
@@ -364,7 +378,7 @@ BEGIN ATOMIC
   delete from YYZY.T_YYZY_JSTZ_WHB where jsrq<ksrq;
   
 /*  
-  update YYZY.T_YYZY_JSTZ_WHB as tgt  --¿ªÊ¼ÈÕÆÚ¸üĞÂ
+  update YYZY.T_YYZY_JSTZ_WHB as tgt  --å¼€å§‹æ—¥æœŸæ›´æ–°
   set ksrq = (select rq_n from session.jsbhd where pfphdm = tgt.pfphdm and rq_o = tgt.ksrq)
   where exists(
         select 1 from session.jsbhd as c
@@ -377,7 +391,7 @@ BEGIN ATOMIC
           )
       ) 
   ;
-  update YYZY.T_YYZY_JSTZ_WHB as tgt  --½áÊøÈÕÆÚ¸üĞÂ
+  update YYZY.T_YYZY_JSTZ_WHB as tgt  --ç»“æŸæ—¥æœŸæ›´æ–°
   set jsrq = (select (rq_n - 1 day) from session.jsbhd where pfphdm = tgt.pfphdm and rq_o = tgt.jsrq + 1 day)
   where exists(
         select 1 from session.jsbhd as c
@@ -392,13 +406,13 @@ BEGIN ATOMIC
   ;
   */
 ----------------------------------------------------------------------------
-  --Êı¾İÒì³£Çé¿ö¼à²â, Í¬¸öÅÆºÅÖĞ³öÏÖÁË²»Í¬Åú´ÎµÄ½ÇÉ«±ä»¯ÈÕÆÚÎªÍ¬Ò»Ìì
+  --æ•°æ®å¼‚å¸¸æƒ…å†µç›‘æµ‹, åŒä¸ªç‰Œå·ä¸­å‡ºç°äº†ä¸åŒæ‰¹æ¬¡çš„è§’è‰²å˜åŒ–æ—¥æœŸä¸ºåŒä¸€å¤©
   if (select count(*) from session.jsbhd group by pfphdm, rq_n having count(pc_n)>1)>0 then
     SIGNAL SQLSTATE '99999' 
       SET MESSAGE_TEXT = 'exceptional situation occured!';
   end if;
   
-  --¸ù¾İ½ÇÉ«±ä»¯µã¸üĞÂ¼Æ»®Åú´Î
+  --æ ¹æ®è§’è‰²å˜åŒ–ç‚¹æ›´æ–°è®¡åˆ’æ‰¹æ¬¡
   insert into session.T_YYZY_RSCJHB_WHB(pfphdm, ksrq,jsrq,jhpc_avg)
   with 
   tb_jsbhd as (
@@ -406,7 +420,7 @@ BEGIN ATOMIC
     from session.jsbhd as m 
       left join session.sjfw_o as f 
         on m.pfphdm = f.pfphdm 
-    where pc_o <= f.jspc + 1
+    where pc_o <= f.jspc
 --    union all
 --    select distinct m.pfphdm, f.jsrq as rq_o, f.jspc as pc_o, rq_n, pc_n
 --    from session.jsbhd as m
@@ -446,9 +460,9 @@ BEGIN ATOMIC
       rownumber()over(partition by m.pfphdm order by m.jhrq) as xh
     from jh_r as m
       left join tb_jsbhd as c
-        on m.pfphdm = c.pfphdm and c.rq_n = m.jhrq
+        on m.pfphdm = c.pfphdm and c.rq_n + 1 day = m.jhrq
       left join tb_jsbhd as c1
-        on m.pfphdm = c1.pfphdm and c1.rq_n - 1 day = m.jhrq
+        on m.pfphdm = c1.pfphdm and c1.rq_n = m.jhrq
   )
   , jh_r_cir(pfphdm, jhrq, jhpc, xh, xh1) as (
     select pfphdm, jhrq, jhpc, xh, 1 as xh1
@@ -466,7 +480,7 @@ BEGIN ATOMIC
   group by pfphdm, jhpc, xh1
   ;
 
-  --¸ù¾İÅú´Î¸üĞÂ²úÁ¿
+  --æ ¹æ®æ‰¹æ¬¡æ›´æ–°äº§é‡
   update session.T_YYZY_RSCJHB_WHB as m
   set 
     jhcl_avg = (
@@ -480,12 +494,12 @@ BEGIN ATOMIC
         AND d1.PFPHDM=m.PFPHDM
     )
   ;
-  --¸üĞÂ°æ±¾ÈÕÆÚ
+  --æ›´æ–°ç‰ˆæœ¬æ—¥æœŸ
   update session.T_YYZY_RSCJHB_WHB as m
   set bbrq = (select max(bbrq) from YYZY.T_YYZY_RSCJHB_WHB)
   ;
   
-  --Êı¾İÈë¿â
+  --æ•°æ®å…¥åº“
   delete from YYZY.T_YYZY_RSCJHB_WHB as m
   where exists(
         select 1 from session.jsbhd as j
@@ -504,6 +518,6 @@ BEGIN ATOMIC
 
 END LB_MAIN;
 
-COMMENT ON PROCEDURE YYZY.P_YYZY_SDPF_JSGX() IS 'Ëø¶¨Åä·½½ÇÉ«¸üĞÂ';
+COMMENT ON PROCEDURE YYZY.P_YYZY_SDPF_JSGX() IS 'é”å®šé…æ–¹è§’è‰²æ›´æ–°';
 
 GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_SDPF_JSGX () TO USER APPUSR;
