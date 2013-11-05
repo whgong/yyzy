@@ -1,4 +1,4 @@
-
+/*
 --DROP TABLE YYZY.T_YYZY_TMP_SJTLXS;
 CREATE TABLE YYZY.T_YYZY_TMP_SJTLXS(
   RQ date,
@@ -8,7 +8,7 @@ CREATE TABLE YYZY.T_YYZY_TMP_SJTLXS(
 ) 
   in ts_reg_16k
 ; 
-
+*/
 -------------------------------------------------
 drop PROCEDURE YYZY.P_YYZY_LSPF6PHJS;
 
@@ -149,20 +149,21 @@ BEGIN ATOMIC
       ; 
       
       if lc_c_yydm_k='-1' then --锁定部分已扣减完,使用未锁定部分
-        delete from YYZY.T_YYZY_ZXPF_WHB --删除异常数据,否则可能出现死循环
-        where pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
-          and yyfpl <= 0
-        ;
+--        delete from YYZY.T_YYZY_ZXPF_WHB --删除异常数据,否则可能出现死循环
+--        where pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
+--          and yyfpl <= 0
+--        ;
         select yydm, yynf, kclx, zlyybj, zpfbj, yyfpl 
             into lc_c_yydm_k, lc_i_yynf_k, lc_i_kclx_k, lc_c_ZLYYBJ, lc_c_ZPFBJ, lc_n_yyfpl
         from YYZY.T_YYZY_ZXPF_WHB 
         where pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
+          and yyfpl > 0 
         order by ksrq, jsrq, tdsx 
         fetch first 1 row only
         ; 
-        if lc_c_yydm_k='-1' then --无烟叶可扣减,退出该牌号角色的处理
-          leave loopf1; 
-        end if;
+--        if lc_c_yydm_k='-1' then --无烟叶可扣减,退出该牌号角色的处理
+--          leave loopf1; 
+--        end if;
         
       end if;
       
@@ -186,6 +187,8 @@ BEGIN ATOMIC
           and ksrq = lc_d_ksrq and jsrq = lc_d_jsrq 
           and kclx = lc_i_kclx and zxsx = lc_n_zxsx 
         ;
+        leave loopw2; --结束该天的数量分配
+      elseif lc_c_yydm_k = '-1' then --无烟叶可扣减,退出该牌号角色的处理
         leave loopw2; --结束该天的数量分配
       elseif lc_n_yyfpl > lc_n_tlsl then --若足够扣减投料量
         if (lc_c_yydm_k = lc_c_yydm and lc_i_yynf_k = lc_i_yynf 
@@ -339,7 +342,10 @@ BEGIN ATOMIC
   lp1: 
   for v1 as c1 cursor for 
     select distinct pfphdm 
-    from YYZY.T_YYZY_ZXPF_SDB 
+    from JYHSF.T_JYHSF_ZSPF_SDB 
+    union 
+    select distinct pfphdm 
+    from JYHSF.T_JYHSF_ZSPF 
   do 
     --step1:计算ksrq,jsrq
     set lc_d_tlksrq = value((select date(max(ZDTLSJ))+1 day as ksrq 
@@ -386,8 +392,12 @@ BEGIN ATOMIC
     lp2:
     for v2 as c2 cursor for 
       select distinct jsdm
-      from YYZY.T_YYZY_ZXPF_SDB
+      from JYHSF.T_JYHSF_ZSPF_SDB 
       where pfphdm = v1.pfphdm
+      union 
+      select distinct jsdm 
+      from JYHSF.T_JYHSF_ZSPF 
+      where pfphdm = v1.pfphdm 
     do 
       if lc_d_tljsrq<lc_d_tlksrq or lc_d_tljsrq is null then --若当天没有新增投料记录
         set lc_n_tlsl = 0;

@@ -153,21 +153,22 @@ BEGIN ATOMIC
       ; 
       
       if lc_c_yydm_k='-1' then --锁定部分已扣减完,使用未锁定部分
-        delete from JYHSF.T_JYHSF_ZSPF --删除异常数据,否则可能出现死循环
-        where pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
-          and yyfpl <= 0
-        ;
+--        delete from JYHSF.T_JYHSF_ZSPF --删除异常数据,否则可能出现死循环
+--        where pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
+--          and yyfpl <= 0
+--        ;
         select yydm, yynf, kclx, zlyybj, zpfbj, yyfpl, yypc 
             into lc_c_yydm_k, lc_i_yynf_k, lc_i_kclx_k, lc_c_ZLYYBJ, lc_c_ZPFBJ, 
               lc_n_yyfpl, lc_c_yypc_k 
         from JYHSF.T_JYHSF_ZSPF 
         where pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
+          and yyfpl>0 
         order by ksrq, jsrq, tdsx 
         fetch first 1 row only
         ; 
-        if lc_c_yydm_k='-1' then --无烟叶可扣减,退出该牌号角色的处理
-          leave loopf1; 
-        end if;
+--        if lc_c_yydm_k='-1' then --无烟叶可扣减,退出该牌号角色的处理
+--          leave loopf1; 
+--        end if;
         
       end if;
       
@@ -191,6 +192,8 @@ BEGIN ATOMIC
           and ksrq = lc_d_ksrq and jsrq = lc_d_jsrq 
           and kclx = lc_i_kclx and zxsx = lc_n_zxsx 
         ;
+        leave loopw2; --结束该天的数量分配
+      elseif lc_c_yydm_k='-1' then --无烟叶可扣减,退出该牌号角色的处理
         leave loopw2; --结束该天的数量分配
       elseif lc_n_yyfpl > lc_n_tlsl then --若足够扣减投料量
         if (lc_c_yydm_k = lc_c_yydm and lc_i_yynf_k = lc_i_yynf 
@@ -307,6 +310,10 @@ BEGIN ATOMIC
     select pfphdm, jsdm
     from JYHSF.T_JYHSF_ZSPF_SDB
     group by pfphdm, jsdm
+    union 
+    select pfphdm, jsdm 
+    from JYHSF.T_JYHSF_ZSPF 
+    group by pfphdm, jsdm 
     order by pfphdm, jsdm
   ;
   
