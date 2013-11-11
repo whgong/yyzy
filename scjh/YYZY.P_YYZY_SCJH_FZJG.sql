@@ -22,7 +22,7 @@ BEGIN ATOMIC
   /* DECLARE USER-DEFINED VARIABLES */ 
   DECLARE lc_d_jhksrq, lc_d_jhjsrq date; 
   DECLARE lc_d_yksrq, lc_d_yjsrq date; 
-  DECLARE lc_n_scpc_o,lc_n_scpc, lc_n_ytlpc, lc_n_sjscpc, lc_n_syscpc decimal(18,6); 
+  DECLARE lc_n_scpc_o,lc_n_scpc_ls,lc_n_scpc, lc_n_ytlpc, lc_n_sjscpc, lc_n_syscpc decimal(18,6); 
   declare lc_i_i1, lc_i_lcm integer;
   declare lc_i_js, lc_i_ys integer;
 
@@ -74,6 +74,7 @@ BEGIN ATOMIC
     set lc_d_yjsrq = lc_d_yksrq + 1 month - 1 day;
     set lc_d_yksrq = (case when lc_d_yksrq<lc_d_jhksrq then lc_d_jhksrq else lc_d_yksrq end);
     
+    --当月剩余生产批次
     set lc_n_scpc_o = 0; 
     select sum((days(jsrq)-days(ksrq)+1)*jhpc_avg) into lc_n_scpc_o 
     from ( 
@@ -85,9 +86,18 @@ BEGIN ATOMIC
         where pfphdm = v1.pfphdm and (ksrq<=jsd and jsrq>=ksd) 
       ) as t 
     ; 
+    --当月已核销批次
+    set lc_n_scpc_ls = coalesce( --分组加工牌号的该月已投料批次
+        (select sum(PHSCPC) from YYZY.T_YYZY_SJTL_SCPC 
+          where date(tlsj) between lc_d_yjsrq - (day(lc_d_yjsrq) - 1) day and lc_d_yjsrq 
+            and pfphdm = v1.pfphdm 
+        ),0 
+      ) 
+    ; 
+    
     case v1.ZYFZJGBJ 
       when '1' then --整月分组加工
-        set lc_n_scpc = lc_n_scpc_o; 
+        set lc_n_scpc = lc_n_scpc_o + lc_n_scpc_ls; 
       when '0' then --部分分组加工 
         set lc_n_scpc = v1.SCPC; 
     end case; 
@@ -131,7 +141,8 @@ BEGIN ATOMIC
       -- 分组加工牌号实际计划批次 
       -- 情况1：整月分组加工:合并牌号计划 / 倍率 (已在计划批次取整模块做了修正,此处无需再次抵扣) 
       -- 情况2：部分分组加工:合并牌号计划 / 倍率 - 分组加工牌号已投料数量 
-      set lc_n_sjscpc = (case when v1.ZYFZJGBJ='1' then lc_n_scpc/v3.bl else lc_n_scpc / v3.bl - lc_n_ytlpc end); 
+--      set lc_n_sjscpc = (case when v1.ZYFZJGBJ='1' then lc_n_scpc/v3.bl else lc_n_scpc / v3.bl - lc_n_ytlpc end); 
+      set lc_n_sjscpc = lc_n_scpc / v3.bl - lc_n_ytlpc; 
       -- 合并牌号的剩余计划批次 
       -- 情况1:整月分组加工:0; 情况2:部分分组加工: 合并牌号原计划批次 - 分组加工牌号实际计划批次 * 倍率 
       set lc_n_syscpc = (case when v1.ZYFZJGBJ='1' then 0 else lc_n_scpc_o - lc_n_sjscpc * v3.bl end); 
