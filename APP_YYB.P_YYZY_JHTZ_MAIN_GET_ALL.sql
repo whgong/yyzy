@@ -11,30 +11,30 @@ CREATE PROCEDURE APP_YYB.P_YYZY_JHTZ_MAIN_GET_ALL ( )
   OLD SAVEPOINT LEVEL
   MODIFIES SQL DATA
   INHERIT SPECIAL REGISTERS
-  --´æ´¢¹ý³Ì  
+  --å­˜å‚¨è¿‡ç¨‹  
 BEGIN 
-  --¶¨ÒåÏµÍ³±äÁ¿  
+  --å®šä¹‰ç³»ç»Ÿå˜é‡  
   DECLARE SQLSTATE CHAR(5); 
   DECLARE SQLCODE INTEGER; 
   DECLARE MSG VARCHAR(1000); 
   
-  --¶¨Òå
+  --å®šä¹‰
   DECLARE MIN_KSRQ, LOOP_DATE, TODAY_DATE ,START_DATE, END_DATE DATE ;   
   
-  /* Ã¿Äê1ÔÂ1ÈÕ,×Ô¶¯¸üÐÂÖ´ÐÐÅä·½Î¬»¤±í¿â´æÀàÐÍ,ÈýÄêÉú²ú¼Æ»®,Ôö¼ÓÂÊ */
+  /* æ¯å¹´1æœˆ1æ—¥,è‡ªåŠ¨æ›´æ–°æ‰§è¡Œé…æ–¹ç»´æŠ¤è¡¨åº“å­˜ç±»åž‹,ä¸‰å¹´ç”Ÿäº§è®¡åˆ’,å¢žåŠ çŽ‡ */
   SET TODAY_DATE=CURRENT DATE;
   
   IF TODAY_DATE=TODAY_DATE - DAYOFYEAR(TODAY_DATE) DAY + 1 DAY THEN 
-    --1.ÐÞ¸ÄÖ´ÐÐÅä·½Î¬»¤±í¿â´æÀàÐÍ
+    --1.ä¿®æ”¹æ‰§è¡Œé…æ–¹ç»´æŠ¤è¡¨åº“å­˜ç±»åž‹
     UPDATE YYZY.T_YYZY_ZXPF_WHB SET KCLX=1 WHERE YYNF=YEAR(CURRENT DATE)-1 AND KCLX=3;
     
-    --2.ÐÞ¸ÄÈýÄêÉú²ú¼Æ»®£¨´ýÔö¼Ó£©
+    --2.ä¿®æ”¹ä¸‰å¹´ç”Ÿäº§è®¡åˆ’ï¼ˆå¾…å¢žåŠ ï¼‰
     
-    --3.ÐÞ¸ÄÔö³¤ÂÊ£¨´ýÔö¼Ó£©
+    --3.ä¿®æ”¹å¢žé•¿çŽ‡ï¼ˆå¾…å¢žåŠ ï¼‰
     
   END IF;
   
-  --±¸·Ý½ÇÉ«µ÷Õû±í
+  --å¤‡ä»½è§’è‰²è°ƒæ•´è¡¨
   INSERT INTO YYZY.T_YYZY_JSTZ_WHB_BAK (PFPHDM, JSDM, KSRQ, JSRQ, DPXS, ZYBJ, BBH)
   SELECT PFPHDM, JSDM, KSRQ, JSRQ, DPXS, ZYBJ, BBH
     FROM YYZY.T_YYZY_JSTZ_WHB
@@ -48,17 +48,17 @@ BEGIN
      AND CURRENT DATE BETWEEN KSRQ AND JSRQ
   ;
   
-  --±£Áô1¸öÔÂµÄ½ÇÉ«µ÷Õû±í±¸·ÝÊý¾Ý
+  --ä¿ç•™1ä¸ªæœˆçš„è§’è‰²è°ƒæ•´è¡¨å¤‡ä»½æ•°æ®
   DELETE FROM YYZY.T_YYZY_JSTZ_WHB_BAK WHERE LOAD_TIME<CURRENT TIMESTAMP - 1 MONTH;
   
   INSERT INTO YYZY.T_YYZY_JZ_RZ(BZ, MBB, JZSJ, SFCG)
-  VALUES('¿ªÊ¼¼ÓÔØ','',CURRENT TIMESTAMP,1);
+  VALUES('å¼€å§‹åŠ è½½','',CURRENT TIMESTAMP,1);
   COMMIT;
 
---  --ÒÀ´Îµ÷ÓÃ¸÷¸ö¼Æ»®µÄ´æ´¢¹ý³Ì
---  --ÈýÄêÉú²ú¼Æ»®£¬È«Á¿¼ÓÔØ
+--  --ä¾æ¬¡è°ƒç”¨å„ä¸ªè®¡åˆ’çš„å­˜å‚¨è¿‡ç¨‹
+--  --ä¸‰å¹´ç”Ÿäº§è®¡åˆ’ï¼Œå…¨é‡åŠ è½½
 --  --CALL APP_YYB.P_YYZY_JHJZ_3YEAR();
---  /* 2013-02-04 ÐÞ¸Ä ,3Äê¼Æ»®ÖÐµÄµ±ÄêÄê¼Æ»®¼ÓÔØ, ·ñÔòÇ°Ì¨Ò³Ãæ ÑÐ·¢->ÑÌÒ¶×ÊÔ´±£ÕÏ·ÖÎöÏµÍ³->×ÛºÏ²éÑ¯->ÄêÉú¼Æ»®(·Ö³§) µ±ÄêÊý¾Ý¼°µ±ÄêÄê·ÝÖ¸ÏòµÄÌø×ªÒ³ÃæÊý¾Ý»áÏÔÊ¾¹ýÆÚÊý¾Ý */ 
+--  /* 2013-02-04 ä¿®æ”¹ ,3å¹´è®¡åˆ’ä¸­çš„å½“å¹´å¹´è®¡åˆ’åŠ è½½, å¦åˆ™å‰å°é¡µé¢ ç ”å‘->çƒŸå¶èµ„æºä¿éšœåˆ†æžç³»ç»Ÿ->ç»¼åˆæŸ¥è¯¢->å¹´ç”Ÿè®¡åˆ’(åˆ†åŽ‚) å½“å¹´æ•°æ®åŠå½“å¹´å¹´ä»½æŒ‡å‘çš„è·³è½¬é¡µé¢æ•°æ®ä¼šæ˜¾ç¤ºè¿‡æœŸæ•°æ® */ 
   INSERT INTO YYZY.T_YYZY_SNSCJH_1 (TOBACCOID, JHNF, PZMC, YHBS, CJDM, JHCL, PPMC, BBH, BBRQ)
   WITH YSSJ AS (
     select A.TOBACCOID,
@@ -82,31 +82,31 @@ BEGIN
     WHERE INT(A.CYEAR)=YEAR(CURRENT DATE)
       AND INT(C_CREATETIME)=(SELECT MAX(INT(C_CREATETIME)) FROM HDS_CXQJ.N_CXQJ_O_REGION_YEARPLAN)
     GROUP BY A.TOBACCOID, B.STANDARDNM, C.brandnm, A.CYEAR, A.C_CREATETIME, E.BBH, D.YHBS, D.SCCJDM
-  ),SNSC_BBRQ AS (  --Ô­ÈýÄê¼Æ»®×î´ó°æ±¾ÈÕÆÚ
+  ),SNSC_BBRQ AS (  --åŽŸä¸‰å¹´è®¡åˆ’æœ€å¤§ç‰ˆæœ¬æ—¥æœŸ
     SELECT MAX(BBRQ) AS BBRQ FROM YYZY.T_YYZY_SNSCJH_1
-  ),NSC_BBRQ AS (   --Éú²ú´¦Äê¼Æ»®×î´ó°æ±¾ÈÕÆÚ
+  ),NSC_BBRQ AS (   --ç”Ÿäº§å¤„å¹´è®¡åˆ’æœ€å¤§ç‰ˆæœ¬æ—¥æœŸ
     SELECT MAX(BBRQ) AS BBRQ FROM YSSJ 
-  ),SCJHBBRQ AS (   --Éú²ú¼Æ»®×î´ó°æ±¾ÈÕÆÚ´¦Àí
+  ),SCJHBBRQ AS (   --ç”Ÿäº§è®¡åˆ’æœ€å¤§ç‰ˆæœ¬æ—¥æœŸå¤„ç†
     SELECT A.BBRQ AS A,B.BBRQ AS B FROM SNSC_BBRQ AS A,NSC_BBRQ AS B WHERE A.BBRQ=B.BBRQ
   )
-  /* µ±Éú²ú´¦·¢²¼ÐÂµÄÄê¼Æ»®Ê±²Å»á½øÐÐ¸üÐÂ */
+  /* å½“ç”Ÿäº§å¤„å‘å¸ƒæ–°çš„å¹´è®¡åˆ’æ—¶æ‰ä¼šè¿›è¡Œæ›´æ–° */
   SELECT TOBACCOID, JHNF, PZMC, YHBS, CJDM, JHCL, PPMC, BBH, BBRQ 
   FROM YSSJ WHERE NOT EXISTS (select 1 from SCJHBBRQ)
   ;
   
-  --ÄêÉú²ú¼Æ»®£¬È«Á¿¼ÓÔØ 
+  --å¹´ç”Ÿäº§è®¡åˆ’ï¼Œå…¨é‡åŠ è½½ 
   CALL APP_YYB.P_YYZY_JHJZ_YEAR(); 
-  --¼¾Éú²ú¼Æ»®£¬¼ÓÔØ¸üÐÂµ±ÄêÊý¾Ý 
+  --å­£ç”Ÿäº§è®¡åˆ’ï¼ŒåŠ è½½æ›´æ–°å½“å¹´æ•°æ® 
   --CALL APP_YYB.P_YYZY_JHJZ_QUARTER();
   
-  --¼¾Éú²ú¼Æ»®,2012Äê04ÔÂ28ÈÕ×¢ÊÍ!!
+  --å­£ç”Ÿäº§è®¡åˆ’,2012å¹´04æœˆ28æ—¥æ³¨é‡Š!!
   --CALL APP_YYB.P_YYZY_JHJZ_J();
   
-  --ÔÂÉú²ú¼Æ»®£¬È«Á¿¼ÓÔØ
+  --æœˆç”Ÿäº§è®¡åˆ’ï¼Œå…¨é‡åŠ è½½
   CALL APP_YYB.P_YYZY_JHJZ_MONTH();
   
   
-  --È¡µÃÑ­»·µÄ¿ªÊ¼ÈÕÆÚ
+  --å–å¾—å¾ªçŽ¯çš„å¼€å§‹æ—¥æœŸ
   SELECT MAX(JHRQ) INTO MIN_KSRQ 
   FROM YYZY.T_YYZY_RSCJH_LSB
     WHERE PFPHDM NOT IN(SELECT PFPHDM FROM YYZY.T_YYZY_WJG_PHSD)     --2011-11-17
@@ -118,13 +118,13 @@ BEGIN
   
   SET LOOP_DATE=MIN_KSRQ;
   WHILE MIN_KSRQ<START_DATE-1 DAY DO 
-    --¸üÐÂÈÕÉú²ú¼Æ»®ÀúÊ·
+    --æ›´æ–°æ—¥ç”Ÿäº§è®¡åˆ’åŽ†å²
     INSERT INTO YYZY.T_YYZY_RSCJH_LSB(PFPHDM,JHRQ,JHCL,JHPC,BBRQ)
     SELECT PFPHDM,KSRQ,JHCL_AVG,JHPC_AVG,BBRQ 
     FROM YYZY.T_YYZY_RSCJHB_WHB 
     WHERE KSRQ=MIN_KSRQ+1 DAY; 
     
-    --±¸·ÝÀúÊ·Êý¾Ý(Ö»±£ÁôÒ»¸öÔÂ)
+    --å¤‡ä»½åŽ†å²æ•°æ®(åªä¿ç•™ä¸€ä¸ªæœˆ)
     DELETE FROM YYZY.T_YYZY_RSCJHB_WHB_BAK
     WHERE BBRQ<=CURRENT DATE-DAY(CURRENT DATE) DAY - 1 MONTH;
     
@@ -135,7 +135,7 @@ BEGIN
     SELECT * 
     FROM YYZY.T_YYZY_RSCJHB_WHB ;
 /*  
-    --¸üÐÂYYZY.T_YYZY_RSCJH_LSB±íÖÐ 81#ÅòË¿£»91ÅòË¿
+    --æ›´æ–°YYZY.T_YYZY_RSCJH_LSBè¡¨ä¸­ 81#è†¨ä¸ï¼›91è†¨ä¸
     UPDATE YYZY.T_YYZY_RSCJH_LSB SET JHCL=0,JHPC=0 WHERE PFPHDM IN (72,73);
 */
     INSERT INTO YYZY.T_YYZY_ZXPF_WHB_BAK
@@ -149,70 +149,78 @@ BEGIN
     FROM YYZY.T_YYZY_ZXPF_WHB
     ;
     
-    --¸´ÖÆÉÏÒ»ÌìµÄÈÕÉú²ú¼Æ»®±í, µ÷Õû½ÇÉ«±íÊ±Ê¹ÓÃ£¬2013Äê8ÔÂ17ÈÕÔö¼Ó.
-    delete from YYZY.T_YYZY_TMP_RSCJHB_WHB_PRI; 
-    insert into YYZY.T_YYZY_TMP_RSCJHB_WHB_PRI 
-    select * from YYZY.T_YYZY_RSCJHB_WHB; 
+    --å¤åˆ¶ä¸Šä¸€å¤©çš„æ—¥ç”Ÿäº§è®¡åˆ’è¡¨, è°ƒæ•´è§’è‰²è¡¨æ—¶ä½¿ç”¨ï¼Œ2013å¹´8æœˆ17æ—¥å¢žåŠ .
+    DELETE FROM YYZY.T_YYZY_TMP_RSCJHB_WHB_PRI; 
+    INSERT INTO YYZY.T_YYZY_TMP_RSCJHB_WHB_PRI 
+    SELECT * FROM YYZY.T_YYZY_RSCJHB_WHB; 
     
-    --ÈÕÉú²ú¼Æ»®ÔöÁ¿¼ÓÔØ 
+    --æ—¥ç”Ÿäº§è®¡åˆ’å¢žé‡åŠ è½½ 
     DELETE FROM YYZY.T_YYZY_RSCJHB_WHB; 
     CALL APP_YYB.P_YYZY_JHJZ_R(MIN_KSRQ+2 DAY,MSG); 
     
-    --Íâ¼Ó¹¤Ëø¶¨ 
-    DELETE FROM YYZY.T_YYZY_RSCJH_LSB WHERE JHRQ >= CURRENT DATE; --2013-04-10ÐÞ¸Ä£¬±£Ö¤Íâ¼Ó¹¤Î¬»¤Êý¾ÝµÄ¼ÓÈë 
+    --å¤–åŠ å·¥é”å®š 
+    DELETE FROM YYZY.T_YYZY_RSCJH_LSB WHERE JHRQ >= CURRENT DATE; --2013-04-10ä¿®æ”¹ï¼Œä¿è¯å¤–åŠ å·¥ç»´æŠ¤æ•°æ®çš„åŠ å…¥ 
     CALL YYZY.P_YYZY_WJG_PHSD(1,MSG);   -- 2011-11-17 
     CALL YYZY.P_YYZY_WJG_PHSD(2,MSG);   -- 2011-11-17 
 
-/* --ÔÚDSÖÐµ÷¶È
-    --Êµ¼ÊÍ¶ÁÏÊý¾Ý(ÔÝÓÃÀúÊ·¼Æ»®×÷ÎªÊµ¼ÊÍ¶ÁÏ),2013Äê8ÔÂ15ÈÕÔö¼Ó.
-    delete from YYZY.T_YYZY_SJTL_SCPC where date(tlsj)>=current_date - (day(current_date) - 1) day;
-    insert into YYZY.T_YYZY_SJTL_SCPC(TLSJ, PFPHDM, PHSCPC)
-    select timestamp(trim(char(JHRQ))||' 00:00:00.000000') as tlsj,PFPHDM, sum(value(JHPC,0)) as phscpc
-    from YYZY.T_YYZY_RSCJH_LSB
-    where pfphdm NOT IN(SELECT PFPHDM FROM YYZY.T_YYZY_WJG_PHSD)
-      and jhrq >= current_date - (day(current_date) - 1) day
-      and jhrq < MIN_KSRQ+2 DAY
-    group by timestamp(trim(char(JHRQ))||' 00:00:00.000000'), pfphdm
-    order by tlsj desc, pfphdm
+/* --åœ¨DSä¸­è°ƒåº¦
+    --å®žé™…æŠ•æ–™æ•°æ®(æš‚ç”¨åŽ†å²è®¡åˆ’ä½œä¸ºå®žé™…æŠ•æ–™),2013å¹´8æœˆ15æ—¥å¢žåŠ .
+    DELETE FROM YYZY.T_YYZY_SJTL_SCPC WHERE DATE(TLSJ)>=CURRENT_DATE - (DAY(CURRENT_DATE) - 1) DAY;
+    INSERT INTO YYZY.T_YYZY_SJTL_SCPC(TLSJ, PFPHDM, PHSCPC)
+    SELECT TIMESTAMP(TRIM(CHAR(JHRQ))||' 00:00:00.000000') AS TLSJ,PFPHDM, SUM(VALUE(JHPC,0)) AS PHSCPC
+    FROM YYZY.T_YYZY_RSCJH_LSB
+    WHERE PFPHDM NOT IN(SELECT PFPHDM FROM YYZY.T_YYZY_WJG_PHSD)
+      AND JHRQ >= CURRENT_DATE - (DAY(CURRENT_DATE) - 1) DAY
+      AND JHRQ < MIN_KSRQ+2 DAY
+    GROUP BY TIMESTAMP(TRIM(CHAR(JHRQ))||' 00:00:00.000000'), PFPHDM
+    ORDER BY TLSJ DESC, PFPHDM
     ;
-    --×ÜÉú²úÅú´Î,2013Äê8ÔÂ15ÈÕÔö¼Ó.
-    delete from YYZY.T_YYZY_SJTL_YEAR where nf>=year(current_date)-1;
-    insert into YYZY.T_YYZY_SJTL_YEAR(nf, PFPHDM, YTLPC)
-    select year(tlsj) as nf,pfphdm, sum(PHSCPC) as ytlpc
-    from YYZY.T_YYZY_SJTL_SCPC
-    where year(tlsj)>=year(current_date)-1
-      and date(tlsj)>=(
-          select date(CSZ)
-          from YYZY.T_YYZY_STCS
-          where csmc = 'ZSPFFSQSRQ'
-          fetch first 1 row only
+    --æ€»ç”Ÿäº§æ‰¹æ¬¡,2013å¹´8æœˆ15æ—¥å¢žåŠ .
+    DELETE FROM YYZY.T_YYZY_SJTL_YEAR WHERE NF>=YEAR(CURRENT_DATE)-1;
+    INSERT INTO YYZY.T_YYZY_SJTL_YEAR(NF, PFPHDM, YTLPC)
+    SELECT YEAR(TLSJ) AS NF,PFPHDM, SUM(PHSCPC) AS YTLPC
+    FROM YYZY.T_YYZY_SJTL_SCPC
+    WHERE YEAR(TLSJ)>=YEAR(CURRENT_DATE)-1
+      AND DATE(TLSJ)>=(
+          SELECT DATE(CSZ)
+          FROM YYZY.T_YYZY_STCS
+          WHERE CSMC = 'ZSPFFSQSRQ'
+          FETCH FIRST 1 ROW ONLY
         )
-      and date(tlsj) < MIN_KSRQ+2 DAY
-    group by year(tlsj),pfphdm
+      AND DATE(TLSJ) < MIN_KSRQ+2 DAY
+    GROUP BY YEAR(TLSJ),PFPHDM
     ;
     */
-    --ÈÕÉú²ú¼Æ»®È¡Õû 2013Äê8ÔÂ15ÈÕÐÞ¸Ä, ÓÉÖÆË¿¾ùÔÈÐÔÒÆÖÁ´Ë 
+    --æ—¥ç”Ÿäº§è®¡åˆ’å–æ•´ 2013å¹´8æœˆ15æ—¥ä¿®æ”¹, ç”±åˆ¶ä¸å‡åŒ€æ€§ç§»è‡³æ­¤ 
     CALL YYZY.P_YYZY_RSCJHB_WHB_PCQZ(); 
     
-    --Éú²ú¼Æ»®ÐÞÕý,2013Äê8ÔÂ15ÈÕÔö¼Ó.
---    call YYZY.P_YYZY_RSCJH_JHXZ(year(MIN_KSRQ+2 DAY),month(MIN_KSRQ+2 DAY));
+    --ç”Ÿäº§è®¡åˆ’ä¿®æ­£,2013å¹´8æœˆ15æ—¥å¢žåŠ .
+--    CALL YYZY.P_YYZY_RSCJH_JHXZ(YEAR(MIN_KSRQ+2 DAY),MONTH(MIN_KSRQ+2 DAY));
     
-    --½ÇÉ«¸üÐÂ(°´×îÐÂµÄ¼Æ»®µ÷Õû)
-    --ÐÞÕýÉú²ú¼Æ»®
-    call YYZY.P_YYZY_SDPF_JSGX();
+--    CALL YYZY.P_YYZY_TMP_10YPFQDBD;    
     
-    --É¾³ý·ÖÅäÁ¿Îª -1 µÄÇé¿ö
+	--åˆ†ç»„åŠ å·¥ç”Ÿäº§è®¡åˆ’
+    call YYZY.P_YYZY_SCJH_FZJG;
+    
+    --è§’è‰²æ›´æ–°(æŒ‰æœ€æ–°çš„è®¡åˆ’è°ƒæ•´)
+    --ä¿®æ­£ç”Ÿäº§è®¡åˆ’
+    CALL YYZY.P_YYZY_SDPF_JSGX();
+    
+    --å‰©ä½™æŠ•æ–™åº“å­˜å¤„ç† 201309-29æ–°å¢ž
+    CALL YYZY.P_YYZY_SJTL_SYPCCL;
+    
+    --åˆ é™¤åˆ†é…é‡ä¸º -1 çš„æƒ…å†µ
     DELETE FROM YYZY.T_YYZY_ZXPF_WHB WHERE YYFPL=-1;
     
-    --Ëø¶¨Åä·½ÀúÊ·ÇÐ¸î
-    call YYZY.P_YYZY_LSPF6(MIN_KSRQ+1 DAY); --6ÒªËØ
-    call YYZY.P_YYZY_LSPF7(MIN_KSRQ+1 DAY); --7ÒªËØ
+    --é”å®šé…æ–¹åŽ†å²åˆ‡å‰²
+    CALL YYZY.P_YYZY_LSPF6(MIN_KSRQ+1 DAY); --6è¦ç´ 
+    CALL YYZY.P_YYZY_LSPF7(MIN_KSRQ+1 DAY); --7è¦ç´ 
     
-    --Ëø¶¨Åä·½¸üÐÂ
-    call YYZY.P_YYZY_SDPFGX6(); --6ÒªËØ
-    call YYZY.P_YYZY_SDPFGX7(); --7ÒªËØ
+    --é”å®šé…æ–¹æ›´æ–°
+    CALL YYZY.P_YYZY_SDPFGX6(); --6è¦ç´ 
+    CALL YYZY.P_YYZY_SDPFGX7(); --7è¦ç´ 
     
-    --¸üÐÂZXPF_LSBÊý¾Ý
+    --æ›´æ–°ZXPF_LSBæ•°æ®
     MERGE INTO YYZY.T_YYZY_ZXPF_LSB AS E  
     USING
       (
@@ -221,10 +229,10 @@ BEGIN
           KSSYL,JSSYL,ZLYYBJ,ZPFBJ,BBRQ,FJCHSX,FJCHXX,KCLX 
         FROM YYZY.T_YYZY_ZXPF_WHB 
         WHERE KSRQ=MIN_KSRQ+1 DAY 
-          -- 2013Äê8ÔÂ20ÈÕÐÞ¸Ä
-          and pfphdm not in (select pfphdm from YYZY.T_YYZY_ZXPF_SDB) 
+          -- 2013å¹´8æœˆ20æ—¥ä¿®æ”¹
+          AND PFPHDM NOT IN (SELECT PFPHDM FROM JYHSF.T_JYHSF_ZSPF union select pfphdm from JYHSF.T_JYHSF_ZSPF_SDB) 
           --AND YYFPL>0  
-          --2013-01-01 ÐÞ¸Ä£¬²¿·Ö×©¿é¿ÉÄÜ»áÓÉÓÚÉú²ú¼Æ»®µÈÔ­Òòµ¼ÖÂ·ÖÅäÁ¿Îª0£¬ÊôÓÚÕý³£Çé¿ö£¬Èô¹ýÂËµôÕâÐ©Êý¾Ý£¬ÔòÖ´ÐÐÅä·½ÀúÊ·Êý¾Ý»áÖÐ¶Ï
+          --2013-01-01 ä¿®æ”¹ï¼Œéƒ¨åˆ†ç –å—å¯èƒ½ä¼šç”±äºŽç”Ÿäº§è®¡åˆ’ç­‰åŽŸå› å¯¼è‡´åˆ†é…é‡ä¸º0ï¼Œå±žäºŽæ­£å¸¸æƒ…å†µï¼Œè‹¥è¿‡æ»¤æŽ‰è¿™äº›æ•°æ®ï¼Œåˆ™æ‰§è¡Œé…æ–¹åŽ†å²æ•°æ®ä¼šä¸­æ–­
       ) AS M 
         ON (E.PFPHDM,E.JSDM,E.YYDM,E.YYNF,E.KCLX,E.JSRQ)=
             (M.PFPHDM,M.JSDM,M.YYDM,M.YYNF,M.KCLX,M.KSRQ-1 DAY)
@@ -237,7 +245,7 @@ BEGIN
             M.KSSYL,M.ZXSX,M.KSSYL,M.KSSYL,M.ZLYYBJ,M.ZPFBJ,M.KCLX)
     ;
     
-    --Ö´ÐÐÅä·½ÑÌÒ¶·ÖÅä
+    --æ‰§è¡Œé…æ–¹çƒŸå¶åˆ†é…
     SELECT MAX(JSRQ) INTO END_DATE 
     FROM YYZY.T_YYZY_RSCJHB_WHB
     ; 
@@ -247,23 +255,23 @@ BEGIN
   
   END WHILE; 
   
-  -- ÆäËü·ÖÎöÄ£¿éÊý¾Ý¼ÓÔØ
-  -- Åä·½·ÖÎö 
+  -- å…¶å®ƒåˆ†æžæ¨¡å—æ•°æ®åŠ è½½
+  -- é…æ–¹åˆ†æž 
 --  CALL APP_YYB.P_YYZY_PFFX_WHB(CURRENT DATE + 1 MONTH - DAY(CURRENT DATE) DAY + 1 DAY,MSG); 
-  -- ²úÄÜ·ÖÎö
+  -- äº§èƒ½åˆ†æž
 --  CALL APP_YYB.P_YYZY_CNFX_MAIN(0);
 --  CALL APP_YYB.P_YYZY_CNFX_MAIN(1);
 --  CALL APP_YYB.P_YYZY_CNFX_MX(MSG);
  
-  -- ÏÂÔÂ1ÈÕ¿â´æ¸üÐÂ 
+  -- ä¸‹æœˆ1æ—¥åº“å­˜æ›´æ–° 
   CALL YYZY.P_YYZY_SJJZ_XYKC(START_DATE,MSG);
-  --µ÷¶È
+  --è°ƒåº¦
   CALL YYZY.P_YYZY_SJJZ_DD(MSG);
   
   INSERT INTO YYZY.T_YYZY_JZ_RZ(BZ, MBB, JZSJ, SFCG)
-  VALUES('¼ÓÔØÍê³É','',CURRENT TIMESTAMP,1);
+  VALUES('åŠ è½½å®Œæˆ','',CURRENT TIMESTAMP,1);
   
-  -- ²åÈëÒÑ¾­×ªÀúÊ·µÄ Íâ¼Ó¹¤ÅÆºÅ £¬Á¿ Îª 0 £¬·ÀÖ¹×©Ç½Í¼±¨´í
+  -- æ’å…¥å·²ç»è½¬åŽ†å²çš„ å¤–åŠ å·¥ç‰Œå· ï¼Œé‡ ä¸º 0 ï¼Œé˜²æ­¢ç –å¢™å›¾æŠ¥é”™
   INSERT INTO YYZY.T_YYZY_RSCJHB_WHB
   SELECT PFPHDM,'2013-12-31' AS KSRQ,'2013-12-31' AS JSRQ,0 AS JHCL_AVG,0 AS JHPC_AVG,'2011-12-06' AS BBH
   FROM YYZY.T_YYZY_WJG_PHSD 
@@ -274,17 +282,17 @@ BEGIN
     )
   ;
 
-  /* 2013-01-24 Ôö¼ÓÅä·½Í¼Ïà¹ØÐ£Ñé */ 
+  /* 2013-01-24 å¢žåŠ é…æ–¹å›¾ç›¸å…³æ ¡éªŒ */ 
   CALL YYZY.P_YYZY_ZXPF_JC();
 
-  /* 2013-02-22 ÐÞ¸Ä£¬½«ÅÆºÅºÏ²¢µÄÉè¶¨¼ÓÈëµ½ÔÂÉú²ú¼Æ»®,·ñÔòÔÂÅä·½µ¥ÎÞ·¨ÏÔÊ¾ÅÆºÅºÏ²¢ºóµÄÕýÈ·Êý¾Ý */ 
-  --±¸·ÝÊý¾Ý
-  /* 2013-04-07ÐÞ¸Ä£¬ÔÂ¶È²úÁ¿ÅÆºÅ²»½øÐÐ²»ºÏ²¢¡£
+  /* 2013-02-22 ä¿®æ”¹ï¼Œå°†ç‰Œå·åˆå¹¶çš„è®¾å®šåŠ å…¥åˆ°æœˆç”Ÿäº§è®¡åˆ’,å¦åˆ™æœˆé…æ–¹å•æ— æ³•æ˜¾ç¤ºç‰Œå·åˆå¹¶åŽçš„æ­£ç¡®æ•°æ® */ 
+  --å¤‡ä»½æ•°æ®
+  /* 2013-04-07ä¿®æ”¹ï¼Œæœˆåº¦äº§é‡ç‰Œå·ä¸è¿›è¡Œä¸åˆå¹¶ã€‚
   insert into YYZY.T_YYZY_YSCJH_BAK (YSCJHDM, JHNF, JHYF, YHBS, CJDM, BRIEFNM, WKSPDM, QYDM, JHCL, ZYBJ, QYBBH, XGBZ, BBH, BBRQ, KSRQ, JSRQ,PZMC, PZDM, PPDM)
   SELECT YSCJHDM, JHNF, JHYF, YHBS, CJDM, BRIEFNM, WKSPDM,QYDM, JHCL, ZYBJ, QYBBH, XGBZ, BBH, BBRQ, KSRQ, JSRQ, PZMC, PZDM, PPDM FROM YYZY.T_YYZY_YSCJH WHERE JHNF=YEAR(CURRENT DATE);
   DELETE FROM YYZY.T_YYZY_YSCJH_BAK WHERE LOAD_TIME<CURRENT TIMESTAMP - 1 MONTH;
 
-  --ÐÞ¸ÄÊý¾Ý
+  --ä¿®æ”¹æ•°æ®
   UPDATE YYZY.T_YYZY_YSCJH AS A SET (A.YHBS,A.CJDM)=(SELECT B.YHBS,int(B.CJDM) FROM YYZY.T_YYZY_YS_PH27 AS B WHERE A.YHBS=B.YHBS_SRC AND B.ZYBJ='1' AND B.YHBS_SRC=B.YHBS)
   WHERE A.YHBS IN (SELECT YHBS_SRC FROM YYZY.T_YYZY_YS_PH27 WHERE YHBS_SRC=YHBS AND YHBS NOT IN ('26','17'))
     AND (jhnf,jhyf,bbh) in (select jhnf,jhyf,max(bbh) from YYZY.T_YYZY_YSCJH WHERE ZYBJ='1' group by jhnf,jhyf)
@@ -292,16 +300,34 @@ BEGIN
   ;
 */ 
 
-  --3ÔÂ14ÈÕ¸üÐÂ,½«¿â´æÊý¾ÝÃ¿Ìì¸üÐÂÖÁ¿â´æËø¶¨±í,ÒÔ±ãÖ´ÐÐÅä·½Í¼ºÄÓÃ±íÄÜ¹»²éÑ¯×îÐÂµÄ¿â´æÊý¾Ý 
+  --3æœˆ14æ—¥æ›´æ–°,å°†åº“å­˜æ•°æ®æ¯å¤©æ›´æ–°è‡³åº“å­˜é”å®šè¡¨,ä»¥ä¾¿æ‰§è¡Œé…æ–¹å›¾è€—ç”¨è¡¨èƒ½å¤ŸæŸ¥è¯¢æœ€æ–°çš„åº“å­˜æ•°æ® 
   DELETE FROM YYZY.T_YYZY_YYKC_SDB;
   INSERT INTO YYZY.T_YYZY_YYKC_SDB(YYDM, YYMC, YYNF, YYKCJS)
   SELECT YYDM, YYMC, YYNF, YYKCJS 
   FROM YYZY.V_YYZY_YYKC_WHB
   ;
   
-  --¾ùÔÈ»¯Ëã·¨Êý¾Ý¼ÓÔØ
+  --å‡åŒ€åŒ–ç®—æ³•æ•°æ®åŠ è½½
   CALL JYHSF.P_JYHSF_SJJZ();
-
+  
+--2013-09-27 æ·»åŠ   
+MERGE INTO JYHSF.T_JYHSF_KCJYJXX A 
+USING (
+SELECT YYDM,FKPC,YJ FROM JYHSF.T_JYHSF_KCJYJXX 
+WHERE YYDM IN  (
+SELECT YYDM 
+  FROM JYHSF.T_JYHSF_KCJYJXX 
+ WHERE YJ IS NOT NULL 
+  GROUP BY YYDM HAVING COUNT(YYDM)>1)
+  AND FKPC='1'
+) B
+ON A.YYDM=B.YYDM AND A.YJ IS NULL   
+WHEN MATCHED THEN
+UPDATE SET A.YJ=B.YJ;
+  
+insert into JYHSF.T_JYHSF_KCJYJXX(YYDM, FKPC, YJ, KCXS, KCLX)
+values('0','1',null,999999,null);
+  
 END;
 
 GRANT EXECUTE ON PROCEDURE APP_YYB.P_YYZY_JHTZ_MAIN_GET_ALL ( ) 
