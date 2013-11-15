@@ -162,7 +162,7 @@ BEGIN ATOMIC
       and b.ksrq<=a.jsrq 
       and a.pfphdm =b.pfphdm 
   ) as t 
-  where pfphdm not in (select pfphdm from YYZY.T_YYZY_PFPH_CFG where gpbj in (1,2)) 
+  where pfphdm not in (select pfphdm from YYZY.T_YYZY_PFPH_CFG where gpbj in ('1','2')) 
   order by pfphdm,JSDM,(case when ad1<bd1 then bd1 else ad1 end)
   ; 
   

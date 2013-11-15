@@ -60,11 +60,11 @@ BEGIN ATOMIC
   DECLARE GLOBAL TEMPORARY TABLE t_yyzy_rscjhb_whb like yyzy.t_yyzy_rscjhb_whb with replace on commit preserve rows not logged;
   
   /* SQL PROCEDURE BODY */
-  delete from session1.tb_yscjh_wjg;
-  delete from session1.t_yyzy_rscjhb_whb;
+  delete from session.tb_yscjh_wjg;
+  delete from session.t_yyzy_rscjhb_whb;
 -----------------------------------------------------------------------------------
   --外加工月计划获取
-  insert into session1.tb_yscjh_wjg(pfphdm, jhnf, jhyf, jhcl)
+  insert into session.tb_yscjh_wjg(pfphdm, jhnf, jhyf, jhcl)
   WITH tb_PPGG AS (
     select PPGGID, JHNF,CJMC,CJDM,PPMC,PPDM,YHBS,JYGG,CZR ,BBH,BBRQ, pfphdm
     from DIM.T_DIM_YYZY_WJGPPGG
@@ -91,29 +91,29 @@ BEGIN ATOMIC
     and m.jhyf>=month(IP_STARTDATE)
   ;
   
-  update session1.tb_yscjh_wjg
+  update session.tb_yscjh_wjg
   set yksrq = date(to_date(char(jhnf*100*100+jhyf*100+1),'YYYYMMDD'))
   ;
-  update session1.tb_yscjh_wjg
+  update session.tb_yscjh_wjg
   set yjsrq = yksrq + 1 month - 1 day
   ;
-  update session1.tb_yscjh_wjg
+  update session.tb_yscjh_wjg
   set jhcl_avg = jhcl*1.000000/(days(yjsrq)-days(yksrq)+1)
   ;
   
   lp1:
   for v1 as c1 cursor for
     select pfphdm, jhnf, jhyf, yksrq, yjsrq, jhcl_avg
-    from session1.tb_yscjh_wjg
+    from session.tb_yscjh_wjg
     order by jhnf, jhyf
   do
     --指定月份中增加外加工烟叶制丝计划
-    delete from session1.t_yyzy_rscjhb_whb;
-    insert into session1.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
+    delete from session.t_yyzy_rscjhb_whb;
+    insert into session.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
     with 
     tb_yscjh_wjg as (
       select *
-      from session1.tb_yscjh_wjg
+      from session.tb_yscjh_wjg
       where pfphdm = v1.pfphdm and jhnf = v1.jhnf and jhyf = v1.jhyf
     )
     ,tb_clksrq as (
@@ -156,10 +156,10 @@ BEGIN ATOMIC
     ;
     
     --入目标表
-    delete from yyzy.t_yyzy_rscjhb_whb as e where exists (select 1 from session1.t_yyzy_rscjhb_whb where pfphdm = e.pfphdm);
+    delete from yyzy.t_yyzy_rscjhb_whb as e where exists (select 1 from session.t_yyzy_rscjhb_whb where pfphdm = e.pfphdm);
     insert into yyzy.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
     select pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg
-    from session1.t_yyzy_rscjhb_whb;
+    from session.t_yyzy_rscjhb_whb;
 
   end for lp1;
   
