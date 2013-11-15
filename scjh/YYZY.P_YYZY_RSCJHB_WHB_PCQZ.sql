@@ -1,4 +1,4 @@
-
+/*
 drop table YYZY.T_YYZY_TMP_RSCPCB;
 create table YYZY.T_YYZY_TMP_RSCPCB 
 (
@@ -8,13 +8,13 @@ create table YYZY.T_YYZY_TMP_RSCPCB
   jhcl decimal(18,6)
 )
 in ts_reg_16k;
-
+*/
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 SET SCHEMA ETLUSR;
 SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,SYSIBMADM,ETLUSR;
 
-DROP PROCEDURE YYZY.P_YYZY_RSCJHB_PCQZ_DPH;
+--DROP PROCEDURE YYZY.P_YYZY_RSCJHB_PCQZ_DPH;
 
 create PROCEDURE YYZY.P_YYZY_RSCJHB_PCQZ_DPH(
   ip_pfphdm integer,
@@ -78,16 +78,16 @@ BEGIN
 -----------------------------------------------------------------------------------------------
   -- 处理指定牌号的卷接包计划 
   if ip_pfphdm in (select pfphdm from DIM.T_DIM_YYZY_PFPH_PHCF where sccjdm in (1,2)) then 
-    delete from YYZY.T_YYZY_TMP_RSCPCB;
-    insert into YYZY.T_YYZY_TMP_RSCPCB(pfphdm, jhrq, jhpc, jhcl)
-    select PFPHDM, riqi as jhrq, JHPC_AVG, jhcl_avg
-    from YYZY.T_YYZY_RSCJHB_WHB as m
+    delete from YYZY.T_YYZY_TMP_RSCPCB; 
+    insert into YYZY.T_YYZY_TMP_RSCPCB(pfphdm, jhrq, jhpc, jhcl) 
+    select PFPHDM, riqi as jhrq, JHPC_AVG, jhcl_avg 
+    from YYZY.T_YYZY_RSCJHB_WHB as m 
       inner join DIM.T_DIM_YYZY_DATE as d 
         on d.riqi between m.ksrq and m.jsrq 
     where pfphdm = ip_pfphdm 
       and jsrq < ip_mxjjbrq 
-    order by JHPC_AVG desc
-    ;
+    order by JHPC_AVG desc 
+    ; 
     
     lp1:    --轮询计划月份
     for v1 as c1 cursor for 
@@ -96,6 +96,11 @@ BEGIN
         group by year(jhrq),month(jhrq)
         order by 1,2
     do 
+      set lc_i_tmpval = coalesce( 
+                          (select sum(jhcl) from YYZY.T_YYZY_TMP_RSCPCB where jhrq between v1.ksrq and v1.jsrq) 
+                          ,0 
+                        ) 
+      ; 
       set lc_d_bsd = 0;
       lp2:  --轮询日计划
       for v2 as c2 cursor for 
@@ -103,8 +108,30 @@ BEGIN
           from YYZY.T_YYZY_TMP_RSCPCB 
           where jhrq between v1.ksrq and v1.jsrq 
           order by jhrq 
-          FOR UPDATE OF jhcl
+          FOR UPDATE OF jhcl 
       do
+        set lc_d_bsd = MATH.F_XSQZ(v2.jhcl,lc_i_dpcl); -- - v2.jhcl; 
+        if v2.jhcl = 0 then --当天计划为0
+          --不处理
+        elseif lc_i_tmpval<=0 then --当月产量已扣减完
+          update YYZY.T_YYZY_TMP_RSCPCB 
+          set jhcl = 0 
+          where current of c2 
+          ; 
+        elseif lc_i_tmpval >= lc_d_bsd then --当月产量足够扣减
+          update YYZY.T_YYZY_TMP_RSCPCB 
+          set jhcl = MATH.F_XSQZ(jhcl,lc_i_dpcl) 
+          where current of c2 
+          ; 
+          set lc_i_tmpval = lc_i_tmpval - lc_d_bsd; 
+        elseif lc_i_tmpval > 0 and lc_i_tmpval < lc_d_bsd then --当月产量不够扣减
+          update YYZY.T_YYZY_TMP_RSCPCB 
+          set jhcl = round(jhcl * 1.000000 / lc_i_dpcl, 0) * lc_i_dpcl --四舍五入
+          where current of c2 
+          ; 
+          set lc_i_tmpval = 0; 
+        end if;
+/*
         if v2.jhcl<>0 and v2.jhcl>=lc_d_bsd then    --当天的数量足够抵消前一天缺口
           update YYZY.T_YYZY_TMP_RSCPCB                   --修正当天的批次数
           set jhcl = jhcl - lc_d_bsd 
@@ -123,6 +150,7 @@ BEGIN
           ;
           set lc_d_bsd = lc_d_bsd - v2.jhcl; 
         end if; 
+*/
       end for lp2; --以上为 轮询日计划 
     end for lp1; --以上为 轮询计划月份 
     
@@ -151,7 +179,7 @@ BEGIN
                 end) 
   do
     set lc_i_ts = (days(v3.jsrq) - days(v3.ksrq) + 1);
-    set lc_i_tot = v3.jhpc_avg * lc_i_ts + round(MATH.F_QZBS(v3.jhpc_avg * lc_i_ts),2);
+    set lc_i_tot = round(v3.jhpc_avg * lc_i_ts,0); -- + round(MATH.F_QZBS(v3.jhpc_avg * lc_i_ts),2);
     set lc_i_min = lc_i_tot / lc_i_ts;
     set lc_i_ys = mod(lc_i_tot, lc_i_ts);
     
@@ -255,7 +283,7 @@ end lbmain;
 
 -----------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------
-DROP PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ;
+--DROP PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ;
 
 CREATE PROCEDURE YYZY.P_YYZY_RSCJHB_WHB_PCQZ()
   SPECIFIC YYZY.SQL130725174626700

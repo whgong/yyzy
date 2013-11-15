@@ -1,4 +1,4 @@
-drop PROCEDURE YYZY.P_YYZY_SCJH_FZJG; 
+--drop PROCEDURE YYZY.P_YYZY_SCJH_FZJG; 
 
 SET SCHEMA = ETLUSR;
 SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,ETLUSR;
@@ -94,6 +94,11 @@ BEGIN ATOMIC
         ),0 
       ) 
     ; 
+    set lc_n_scpc_ls = lc_n_scpc_ls + coalesce( --加入上月提前领料的批次 
+                                        (select sum(tqllpc) from YYZY.T_YYZY_YSCJH_TQLLL 
+                                          where pfphdm = v1.pfphdm and jhny = lc_d_yksrq - 1 month) 
+                                        ,0 
+                                      ); 
     
     case v1.ZYFZJGBJ 
       when '1' then --整月分组加工
@@ -121,7 +126,7 @@ BEGIN ATOMIC
     end for loopf2; --以上为 多个分组的最小公倍数计算 
     -----------------------------------------------------------------------------------
     --生产批次按最小公倍数向上取整 
-    set lc_n_scpc = int(round(math.f_xsqz(lc_n_scpc, lc_i_lcm),0)); 
+    set lc_n_scpc = int(round(math.f_xsqz(round(lc_n_scpc,0), lc_i_lcm),0)); 
     -----------------------------------------------------------------------------------
     loopf3: --依次计算各分组的生产计划批次 
     for v3 as c3 cursor for 
@@ -137,6 +142,12 @@ BEGIN ATOMIC
               and pfphdm = v3.FZPHDM 
           ),0 
         ) 
+      ; 
+      set lc_n_ytlpc = lc_n_ytlpc + coalesce( --加入上月提前领料的批次 
+                                        (select sum(tqllpc) from YYZY.T_YYZY_YSCJH_TQLLL 
+                                          where pfphdm = v3.FZPHDM and jhny = lc_d_yksrq - 1 month) 
+                                        ,0 
+                                      ) 
       ; 
       -- 分组加工牌号实际计划批次 
       -- 情况1：整月分组加工:合并牌号计划 / 倍率 (已在计划批次取整模块做了修正,此处无需再次抵扣) 

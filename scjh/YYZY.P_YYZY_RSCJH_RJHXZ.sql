@@ -8,7 +8,7 @@ create table YYZY.T_YYZY_TMP_RSCPCB
 )
 in ts_reg_16k;
 */
-drop PROCEDURE YYZY.P_YYZY_RSCJH_RJHXZ;
+--drop PROCEDURE YYZY.P_YYZY_RSCJH_RJHXZ;
 
 SET SCHEMA = ETLUSR;
 SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,ETLUSR;
@@ -154,10 +154,10 @@ BEGIN ATOMIC
         select pfphdm, jhnf, jhyf, jhcl from session.tb_yscjh_wjg --外加工月计划计划
       ) as t
     group by jhnf, jhyf, pfphdm
-  )
+  ) 
   , tb_yjhpc as 
   (
-    select jhnf, jhyf, m.pfphdm, jhcl, round(jhcl*1.00000/dpcl+0.5,0) as jhpc
+    select jhnf, jhyf, m.pfphdm, jhcl, round(jhcl*1.00000/dpcl,0) as jhpc
     from tb_yjh_hz as m
       left join (
         select pfphdm,dpcl
@@ -184,7 +184,7 @@ BEGIN ATOMIC
     --计算需要弥补批次
     delete from session.tb_dmbjhs;
     insert into session.tb_dmbjhs(pfphdm, mbpc) 
-    with tb_sjtlpc as 
+    with tb_sjtlpc(pfphdm,phscpc) as 
     (
       select pfphdm,sum(phscpc) as phscpc
       from 
@@ -199,6 +199,12 @@ BEGIN ATOMIC
         ) as t
       where date(tlsj) between lc_d_yksrq and lc_d_rjhksrq - 1 day
         and pfphdm = IP_PFPHDM
+      group by pfphdm
+      union all
+      select pfphdm, sum(tqllpc) as tqllpc
+      from YYZY.T_YYZY_YSCJH_TQLLL 
+      where pfphdm = IP_PFPHDM 
+        and jhny = lc_d_yksrq - 1 month
       group by pfphdm
     )
     , tb_rscjhpc as 
@@ -338,5 +344,3 @@ BEGIN ATOMIC
 END LB_MAIN;
 
 COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_RJHXZ( integer) IS '日生产计划修正';
-
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_RJHXZ (integer) TO USER APPUSR;
