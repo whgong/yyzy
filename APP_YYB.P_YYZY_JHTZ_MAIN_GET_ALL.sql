@@ -160,8 +160,8 @@ BEGIN
     
     --外加工锁定 
     DELETE FROM YYZY.T_YYZY_RSCJH_LSB WHERE JHRQ >= CURRENT DATE; --2013-04-10修改，保证外加工维护数据的加入 
-    CALL YYZY.P_YYZY_WJG_PHSD(1,MSG);   -- 2011-11-17 
     CALL YYZY.P_YYZY_WJG_PHSD(2,MSG);   -- 2011-11-17 
+    CALL YYZY.P_YYZY_WJG_PHSD(1,MSG);   -- 2011-11-17
 
 /* --在DS中调度
     --实际投料数据(暂用历史计划作为实际投料),2013年8月15日增加.
