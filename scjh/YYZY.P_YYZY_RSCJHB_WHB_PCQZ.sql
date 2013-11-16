@@ -126,7 +126,7 @@ BEGIN
           set lc_i_tmpval = lc_i_tmpval - lc_d_bsd; 
         elseif lc_i_tmpval > 0 and lc_i_tmpval < lc_d_bsd then --当月产量不够扣减
           update YYZY.T_YYZY_TMP_RSCPCB 
-          set jhcl = round(jhcl * 1.000000 / lc_i_dpcl, 0) * lc_i_dpcl --四舍五入
+          set jhcl = round(lc_i_tmpval * 1.000000 / lc_i_dpcl, 0) * lc_i_dpcl --四舍五入
           where current of c2 
           ; 
           set lc_i_tmpval = 0; 
