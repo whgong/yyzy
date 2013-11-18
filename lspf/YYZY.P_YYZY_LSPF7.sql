@@ -130,6 +130,11 @@ BEGIN ATOMIC
     group by riqi 
     order by riqi 
   do 
+    if((select count(*) from YYZY.T_YYZY_JSTZ_WHB 
+          where zybj = '1' and pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
+          and v1.rq between ksrq and jsrq)=0) then
+      leave loopf1; --判断当天是否有角色, 若无角色退出当天分配
+    end if;
     set lc_n_tlsl = v1.tlsl; --获取一天的投料量 
     
     loopw2: --轮询锁定烟叶
