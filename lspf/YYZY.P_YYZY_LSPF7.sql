@@ -207,6 +207,7 @@ BEGIN ATOMIC
           update JYHSF.T_JYHSF_ZSPF_LSB as t --更新已有记录
           set t.yyfpl = t.yyfpl+lc_n_tlsl, t.jsrq = v1.RQ, t.jssyl = lc_n_tlsl
           where pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
+            and ksrq = lc_d_ksrq and jsrq = lc_d_jsrq 
             and yydm = lc_c_yydm and yypc = lc_c_yypc and yynf = lc_i_yynf 
             and kclx = lc_i_kclx and zxsx = lc_n_zxsx
           ;
@@ -239,6 +240,7 @@ BEGIN ATOMIC
           update JYHSF.T_JYHSF_ZSPF_LSB as t --更新已有记录
           set yyfpl = yyfpl+lc_n_yyfpl, jssyl = lc_n_yyfpl, jsrq = v1.RQ 
           where pfphdm = IP_PFPHDM and jsdm = IP_JSDM 
+            and ksrq = lc_d_ksrq and jsrq = lc_d_jsrq 
             and yydm = lc_c_yydm and yypc = lc_c_yypc and yynf = lc_i_yynf 
             and kclx = lc_i_kclx and zxsx = lc_n_zxsx
           ;
