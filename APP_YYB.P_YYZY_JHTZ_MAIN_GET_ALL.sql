@@ -104,6 +104,9 @@ BEGIN
   
   --月生产计划，全量加载
   CALL APP_YYB.P_YYZY_JHJZ_MONTH();
+   call YYZY.P_YYZY_YSCJHPC(year(current_date - 1 month),month(current_date - 1 month));
+   call YYZY.P_YYZY_YSCJHPC(year(current_date),month(current_date));
+   call YYZY.P_YYZY_YSCJHPC(year(current_date + 1 month),month(current_date + 1 month));
   
   
   --取得循环的开始日期
@@ -148,6 +151,20 @@ BEGIN
       KSSYL,JSSYL,ZLYYBJ,ZPFBJ,FJCHSX,FJCHXX,KCLX,BBRQ,(SELECT MAX(LOAD_TIME) FROM YYZY.T_YYZY_ZXPF_WHB) AS LOAD_TIME
     FROM YYZY.T_YYZY_ZXPF_WHB
     ;
+    
+    --更新提前领料数据
+    delete from YYZY.T_YYZY_YSCJH_TQLLL where jhny = (MIN_KSRQ+2 day) - (day(MIN_KSRQ+2 day)-1) day - 1 month;
+    insert into YYZY.T_YYZY_YSCJH_TQLLL(PFPHDM, JHNY, TQLLPC)
+    select * 
+    from YYZY.V_YYZY_YSCJH_TQLLL 
+    where jhny = (MIN_KSRQ+2 day) - (day(MIN_KSRQ+2 day)-1) day - 1 month
+    ;
+    delete from YYZY.T_YYZY_YSCJH_TQLLL where jhny = (MIN_KSRQ+2 day) - (day(MIN_KSRQ+2 day)-1) day;
+    insert into YYZY.T_YYZY_YSCJH_TQLLL(PFPHDM, JHNY, TQLLPC)
+    select * 
+    from YYZY.V_YYZY_YSCJH_TQLLL 
+    where jhny = (MIN_KSRQ+2 day) - (day(MIN_KSRQ+2 day)-1) day
+    ; 
     
     --复制上一天的日生产计划表, 调整角色表时使用，2013年8月17日增加.
     DELETE FROM YYZY.T_YYZY_TMP_RSCJHB_WHB_PRI; 

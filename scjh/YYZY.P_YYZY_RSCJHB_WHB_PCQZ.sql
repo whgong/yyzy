@@ -250,7 +250,15 @@ BEGIN
   end for lp3; -- 以上为 轮询所有计划记录
   
   --处理月计划弥补
-  call YYZY.P_YYZY_RSCJH_RJHXZ(ip_pfphdm); 
+  loop_v5: 
+  for v5 as c5 cursor for 
+    select year(jhrq) as nf, month(jhrq) as yf 
+    from YYZY.T_YYZY_TMP_RSCPCB 
+    where jhrq < ip_mxjjbrq 
+    group by year(jhrq), month(jhrq) 
+  do 
+    call YYZY.P_YYZY_RSCJH_RJHXZ(ip_pfphdm, v5.nf, v5.yf); 
+  end for loop_v5; 
   
   --合并相同批次数的日期
   insert into YYZY.T_YYZY_TMP_RSCJHB_WHB(pfphdm, ksrq, jsrq, jhpc_avg) 
