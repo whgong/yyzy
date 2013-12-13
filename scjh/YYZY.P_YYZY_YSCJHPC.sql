@@ -61,7 +61,7 @@ BEGIN ATOMIC
   set lc_d_jhny = date(to_date(char(ip_nf*100+ip_yf),'YYYYMM'));
   ----------------------------------------------------------------------------------------
   --清除数据
-  delete from YYZY.T_YYZY_YSCJHPC where jhny = lc_d_jhny; 
+  delete from YYZY.T_YYZY_YSCJHPC where jhny = lc_d_jhny and jhlx not in ('A'); 
   ----------------------------------------------------------------------------------------
   --1常规计划
   insert into YYZY.T_YYZY_YSCJHPC(PFPHDM, JHNY, JHPC, JHLX)
@@ -143,7 +143,7 @@ BEGIN ATOMIC
     set lc_n_scpc_o = coalesce( 
         (select sum(jhpc) 
           from YYZY.T_YYZY_YSCJHPC 
-          where jhlx = '1' 
+          where jhlx in('1', 'A') 
             and pfphdm = v1.pfphdm 
             and jhny = lc_d_jhny 
         ),

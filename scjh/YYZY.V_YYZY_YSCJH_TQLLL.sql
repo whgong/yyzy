@@ -51,7 +51,7 @@ select pfphdm, jhny, sum(jhpc) as TQLLPC
 from tb_cb as m
 where jhny>='2013-10-01' 
   and not exists(select 1 from YYZY.T_YYZY_FZJG_PHB where fzphdm = m.pfphdm)
-  and not exists(select 1 from YYZY.T_YYZY_PFPH_CFG where pfphdm = m.pfphdm and gpbj in('1','2'))
+  and not exists(select 1 from YYZY.T_YYZY_PFPH_CFG where pfphdm = m.pfphdm and gpbj in('1','2','A'))
 group by pfphdm, jhny
 having sum(jhpc)>0
 ;
