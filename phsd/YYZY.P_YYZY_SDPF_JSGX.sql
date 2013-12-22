@@ -304,7 +304,12 @@ BEGIN ATOMIC
       and zybj = '1' 
   )
   , jstz_yspc as ( --角色变化开始日期 -> 角色原始变化批次号
-    select m.pfphdm, m.bhrq, pcs_ks + jhpc_avg*(days(m.bhrq)-days(ksrq)+1) -1 as bhpc
+    select m.pfphdm, m.bhrq, 
+      case 
+        when pcs_ks is null 
+          then (select max(pcs_js) from session.scpcxl_o where jsrq<m.bhrq and pfphdm = m.pfphdm)
+        else pcs_ks + jhpc_avg*(days(m.bhrq)-days(ksrq)+1) -1 
+      end as bhpc 
     from jstz_bhrq as m
       left join session.scpcxl_o as c
         on m.pfphdm = c.pfphdm 
@@ -312,7 +317,11 @@ BEGIN ATOMIC
   )
   , jstz_gxrq as ( --原始变化批次号 -> 计划调整后角色变化批次号对应日期
     select m.pfphdm, m.bhrq as bhrq_o, m.bhpc, 
-      ksrq + int((m.bhpc - pcs_ks)/jhpc_avg) day as bhrq_n
+      case 
+        when c.ksrq is null
+          then (select max(jsrq) from session.scpcxl_n where pfphdm = m.pfphdm and pcs_js<m.bhpc) 
+        else ksrq + int((m.bhpc - pcs_ks)/jhpc_avg) day 
+      end as bhrq_n 
     from jstz_yspc as m
       left join session.scpcxl_n as c
         on m.pfphdm = c.pfphdm 
@@ -327,14 +336,19 @@ BEGIN ATOMIC
   ) 
   -- 计划调整后角色变化批次点对应日期 -> 调整角色后批次号
   select m.pfphdm, m.bhrq_o, m.bhpc as bhpc_o, m.bhrq_n,
-    pcs_ks + jhpc_avg*(days(m.bhrq_n)-days(ksrq)+1) - 1 as bhpc_n
+    case 
+      when pcs_ks is null
+        then (select max(pcs_js) from session.scpcxl_n where pfphdm = m.pfphdm and jsrq<m.bhrq_n)
+      else pcs_ks + jhpc_avg*(days(m.bhrq_n)-days(ksrq)+1) - 1 
+    end as bhpc_n 
   from jstz_gxrq1 as m
     left join session.scpcxl_n as c
       on m.pfphdm = c.pfphdm
       and m.bhrq_n between c.ksrq and c.jsrq
   ;
   
-  delete from session.jsbhd where rq_o = rq_n and pc_o = pc_n;
+  delete from session.jsbhd where rq_o = rq_n and pc_o = pc_n; 
+  delete from session.jsbhd where pc_o is null or rq_n is null or pc_n is null; 
   
 ----------------------------------------------------------------------------'
   --?需改为新增版本的方式
