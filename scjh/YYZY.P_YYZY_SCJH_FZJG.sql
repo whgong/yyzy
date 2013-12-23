@@ -21,7 +21,7 @@ BEGIN ATOMIC
   DECLARE SQL_STMT VARCHAR(2000); 
   /* DECLARE USER-DEFINED VARIABLES */ 
   DECLARE lc_d_jhksrq, lc_d_jhjsrq date; 
-  DECLARE lc_d_yksrq, lc_d_yjsrq date; 
+  DECLARE lc_d_yksrq, lc_d_yksrq1, lc_d_yjsrq date; 
   DECLARE lc_n_scpc_o,lc_n_scpc_ls,lc_n_scpc, lc_n_ytlpc, lc_n_sjscpc, lc_n_syscpc decimal(18,6); 
   declare lc_i_i1, lc_i_lcm integer;
   declare lc_i_js, lc_i_ys integer;
@@ -70,9 +70,9 @@ BEGIN ATOMIC
   do 
     -----------------------------------------------------------------------------------
     --获得生产批次
-    set lc_d_yksrq = date(to_date(char(nf*100*100+yf*100+1),'YYYYMMDD'));
-    set lc_d_yjsrq = lc_d_yksrq + 1 month - 1 day;
-    set lc_d_yksrq = (case when lc_d_yksrq<lc_d_jhksrq then lc_d_jhksrq else lc_d_yksrq end);
+    set lc_d_yksrq1 = date(to_date(char(nf*100*100+yf*100+1),'YYYYMMDD')); 
+    set lc_d_yjsrq = lc_d_yksrq1 + 1 month - 1 day; 
+    set lc_d_yksrq = (case when lc_d_yksrq1<lc_d_jhksrq then lc_d_jhksrq else lc_d_yksrq1 end); 
     
     --当月剩余生产批次
     set lc_n_scpc_o = 0; 
@@ -89,14 +89,14 @@ BEGIN ATOMIC
     --当月已核销批次
     set lc_n_scpc_ls = coalesce( --分组加工牌号的该月已投料批次
         (select sum(PHSCPC) from YYZY.T_YYZY_SJTL_SCPC 
-          where date(tlsj) between lc_d_yjsrq - (day(lc_d_yjsrq) - 1) day and lc_d_yjsrq 
+          where date(tlsj) between lc_d_yksrq1 and lc_d_yjsrq 
             and pfphdm = v1.pfphdm 
         ),0 
       ) 
     ; 
     set lc_n_scpc_ls = lc_n_scpc_ls + coalesce( --加入上月提前领料的批次 
                                         (select sum(tqllpc) from YYZY.T_YYZY_YSCJH_TQLLL 
-                                          where pfphdm = v1.pfphdm and jhny = lc_d_yksrq - 1 month) 
+                                          where pfphdm = v1.pfphdm and jhny = lc_d_yksrq1 - 1 month) 
                                         ,0 
                                       ); 
     
@@ -138,14 +138,14 @@ BEGIN ATOMIC
     do 
       set lc_n_ytlpc = coalesce( --分组加工牌号的该月已投料批次
           (select sum(PHSCPC) from YYZY.T_YYZY_SJTL_SCPC 
-            where date(tlsj) between lc_d_yjsrq - (day(lc_d_yjsrq) - 1) day and lc_d_yjsrq 
+            where date(tlsj) between lc_d_yksrq1 and lc_d_yjsrq 
               and pfphdm = v3.FZPHDM 
           ),0 
         ) 
       ; 
       set lc_n_ytlpc = lc_n_ytlpc + coalesce( --加入上月提前领料的批次 
                                         (select sum(tqllpc) from YYZY.T_YYZY_YSCJH_TQLLL 
-                                          where pfphdm = v3.FZPHDM and jhny = lc_d_yksrq - 1 month) 
+                                          where pfphdm = v3.FZPHDM and jhny = lc_d_yksrq1 - 1 month) 
                                         ,0 
                                       ) 
       ; 
@@ -154,6 +154,7 @@ BEGIN ATOMIC
       -- 情况2：部分分组加工:合并牌号计划 / 倍率 - 分组加工牌号已投料数量 
 --      set lc_n_sjscpc = (case when v1.ZYFZJGBJ='1' then lc_n_scpc/v3.bl else lc_n_scpc / v3.bl - lc_n_ytlpc end); 
       set lc_n_sjscpc = lc_n_scpc / v3.bl - lc_n_ytlpc; 
+      set lc_n_sjscpc = case when lc_n_sjscpc<0 then 0 else lc_n_sjscpc end; 
       -- 合并牌号的剩余计划批次 
       -- 情况1:整月分组加工:0; 情况2:部分分组加工: 合并牌号原计划批次 - 分组加工牌号实际计划批次 * 倍率 
       set lc_n_syscpc = (case when v1.ZYFZJGBJ='1' then 0 else lc_n_scpc_o - lc_n_sjscpc * v3.bl end); 
