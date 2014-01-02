@@ -68,6 +68,11 @@ BEGIN
   then
     leave lbmain;
   end if;
+  if lc_i_dpcl =0 then 
+    SIGNAL SQLSTATE '99999' --抛出异常
+      SET MESSAGE_TEXT = 'user-defined exception:dpcl=0' 
+    ; 
+  end if; 
 -----------------------------------------------------------------------------------------------
   --计算牌号的单批产量
   set lc_i_dpcl = cast(null as integer);
@@ -177,8 +182,14 @@ BEGIN
                   else 
                     date('1980-01-01') 
                 end) 
+      and ksrq<=jsrq 
   do
-    set lc_i_ts = (days(v3.jsrq) - days(v3.ksrq) + 1);
+    set lc_i_ts = (days(v3.jsrq) - days(v3.ksrq) + 1); 
+    if lc_i_ts = 0 then --异常情况处理
+      SIGNAL SQLSTATE '99999' --抛出异常
+        SET MESSAGE_TEXT = 'user-defined exception:pcqz_dph_ts = 0' 
+      ; 
+    end if; 
     set lc_i_tot = round(v3.jhpc_avg * lc_i_ts,0); -- + round(MATH.F_QZBS(v3.jhpc_avg * lc_i_ts),2);
     set lc_i_min = lc_i_tot / lc_i_ts;
     set lc_i_ys = mod(lc_i_tot, lc_i_ts);
