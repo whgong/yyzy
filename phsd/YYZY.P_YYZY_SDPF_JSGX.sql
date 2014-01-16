@@ -1,4 +1,4 @@
-drop PROCEDURE YYZY.P_YYZY_SDPF_JSGX;
+--drop PROCEDURE YYZY.P_YYZY_SDPF_JSGX;
 SET SCHEMA = ETLUSR;
 SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,ETLUSR;
 
@@ -104,7 +104,7 @@ BEGIN ATOMIC
     select PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG, (days(jsrq)-days(ksrq)+1)*jhpc_avg as pczs
     from YYZY.T_YYZY_TMP_RSCJHB_WHB_PRI
     where jhpc_avg is not null
-      and jhpc_avg<>0
+--      and jhpc_avg<>0
     order by pfphdm, ksrq,jsrq
   )
   , tb_scpc_js as (
@@ -116,6 +116,11 @@ BEGIN ATOMIC
     select pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, 
       lag(pczs_js,1,0)over(partition by pfphdm order by ksrq,jsrq)+1 as pczs_ks ,pczs_js
     from tb_scpc_js
+  )
+  , tb_scpc_ks_cl as (
+    select pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg,
+      case when pczs_ks<=pczs_js then pczs_ks end as pczs_ks, pczs_js
+    from tb_scpc_ks
   )
   , tb_ytlpc as (
     select m.pfphdm ,sum(PHSCPC) as ytlpc
@@ -136,7 +141,7 @@ BEGIN ATOMIC
   )
   select m.pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, 
     pczs_ks + ytlpc as pczs_ks ,pczs_js + ytlpc as pczs_js
-  from tb_scpc_ks as m
+  from tb_scpc_ks_cl as m
     left join tb_ytlpc as y
       on m.pfphdm = y.pfphdm
   ;
@@ -147,7 +152,7 @@ BEGIN ATOMIC
     select PFPHDM, KSRQ, JSRQ, JHCL_AVG, JHPC_AVG, (days(jsrq)-days(ksrq)+1)*jhpc_avg as pczs
     from YYZY.T_YYZY_RSCJHB_WHB
     where pfphdm <>16
-      and jhpc_avg<>0
+--      and jhpc_avg<>0
     order by pfphdm, ksrq,jsrq
   )
   , tb_scpc_js as (
@@ -159,6 +164,11 @@ BEGIN ATOMIC
     select pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, 
       lag(pczs_js,1,0)over(partition by pfphdm order by ksrq,jsrq)+1 as pczs_ks ,pczs_js
     from tb_scpc_js
+  )
+  , tb_scpc_ks_cl as (
+    select pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, 
+      case when pczs_ks<=pczs_js then pczs_ks end as pczs_ks, pczs_js
+    from tb_scpc_ks 
   )
   , tb_ytlpc as (
     select m.pfphdm ,sum(PHSCPC) as ytlpc
@@ -179,38 +189,13 @@ BEGIN ATOMIC
   )
   select m.pfphdm, ksrq, jsrq, jhcl_avg, jhpc_avg, 
     pczs_ks + ytlpc as pczs_ks ,pczs_js + ytlpc as pczs_js
-  from tb_scpc_ks as m
+  from tb_scpc_ks_cl as m
     left join tb_ytlpc as y
       on m.pfphdm = y.pfphdm
   ;
 ----------------------------------------------------------------------------------
   --获得需处理的时间范围
   insert into session.sjfw(pfphdm, ksrq, jsrq, jspc)
---  with sdpcs as (
---    select pfphdm, max(jspcs) as jspcs
---    from YYZY.T_YYZY_PFDXXB
---    where (pfphdm, nf, yf, bbh)in(
---        select pfphdm, nf, yf, max(bbh)
---        from YYZY.T_YYZY_PFDXXB
---        group by pfphdm, nf, yf
---      )
---    group by pfphdm
---  )
---  , sdpcs_kspcrq as (
---    select m.pfphdm, m.jspcs, r.ksrq
---    from sdpcs as m
---      left join (
---        select pfphdm, min(ksrq) as ksrq
---        from session.scpcxl_n group by pfphdm
---      ) as r on m.pfphdm = r.pfphdm
---  )
---  select sc.pfphdm, sc.ksrq, 
---    ksrq + ((jspcs - pcs_ks) / jhpc_avg) day as jsrq
---  from session.scpcxl_n as sc
---    inner join sdpcs as sd 
---      on sc.pfphdm = sd.pfphdm
---      and sd.JSPCS between sc.pcs_ks and sc.pcs_js
---  ;
   with sdpcs as (
     select pfphdm, max(jspcs) as jspcs --获得锁定部分的结束批次
     from YYZY.T_YYZY_PFDXXB
@@ -267,27 +252,6 @@ BEGIN ATOMIC
       and sd.JSPCS between sc.pcs_ks and sc.pcs_js
   order by 1,2,3 
   ;
---  with sdpcs as (
---    select LSBH, PFPHDM, QSPCS, JSPCS, BBH, SFXG, NF, YF, SFFS
---    from YYZY.T_YYZY_PFDXXB
---    where (pfphdm, nf*100+yf, bbh)in(
---        select pfphdm, max(nf*100+yf), max(bbh)
---        from YYZY.T_YYZY_PFDXXB
---        where (pfphdm, nf*100+yf)in(
---            select pfphdm, max(nf*100+yf)
---            from YYZY.T_YYZY_PFDXXB
---            group by pfphdm
---          )
---        group by pfphdm
---      )
---  )
---  select sc.pfphdm, sc.ksrq, 
---    ksrq + ((jspcs - pcs_ks) / jhpc_avg) day as jsrq
---  from session.scpcxl_o as sc
---    inner join sdpcs as sd 
---      on sc.pfphdm = sd.pfphdm
---      and sd.JSPCS between sc.pcs_ks and sc.pcs_js
---  ;
 
 ---------------------------------------------------------------------------------
   --获取角色变化点信息
@@ -305,11 +269,7 @@ BEGIN ATOMIC
   )
   , jstz_yspc as ( --角色变化开始日期 -> 角色原始变化批次号
     select m.pfphdm, m.bhrq, 
-      case 
-        when pcs_ks is null 
-          then (select max(pcs_js) from session.scpcxl_o where jsrq<m.bhrq and pfphdm = m.pfphdm)
-        else pcs_ks + jhpc_avg*(days(m.bhrq)-days(ksrq)+1) -1 
-      end as bhpc 
+      pcs_js - jhpc_avg*(days(jsrq) - days(m.bhrq)) as bhpc 
     from jstz_bhrq as m
       left join session.scpcxl_o as c
         on m.pfphdm = c.pfphdm 
@@ -317,11 +277,7 @@ BEGIN ATOMIC
   )
   , jstz_gxrq as ( --原始变化批次号 -> 计划调整后角色变化批次号对应日期
     select m.pfphdm, m.bhrq as bhrq_o, m.bhpc, 
-      case 
-        when c.ksrq is null
-          then (select max(jsrq) from session.scpcxl_n where pfphdm = m.pfphdm and pcs_js<m.bhpc) 
-        else ksrq + int((m.bhpc - pcs_ks)/jhpc_avg) day 
-      end as bhrq_n 
+      ksrq + int((m.bhpc - pcs_ks)/jhpc_avg) day as bhrq_n 
     from jstz_yspc as m
       left join session.scpcxl_n as c
         on m.pfphdm = c.pfphdm 
@@ -336,11 +292,7 @@ BEGIN ATOMIC
   ) 
   -- 计划调整后角色变化批次点对应日期 -> 调整角色后批次号
   select m.pfphdm, m.bhrq_o, m.bhpc as bhpc_o, m.bhrq_n,
-    case 
-      when pcs_ks is null
-        then (select max(pcs_js) from session.scpcxl_n where pfphdm = m.pfphdm and jsrq<m.bhrq_n)
-      else pcs_ks + jhpc_avg*(days(m.bhrq_n)-days(ksrq)+1) - 1 
-    end as bhpc_n 
+    pcs_js - jhpc_avg*(days(jsrq) - days(m.bhrq_n)) as bhpc_n 
   from jstz_gxrq1 as m
     left join session.scpcxl_n as c
       on m.pfphdm = c.pfphdm
@@ -348,6 +300,40 @@ BEGIN ATOMIC
   ;
   
   delete from session.jsbhd where rq_o = rq_n and pc_o = pc_n; 
+  
+  
+  ------------------------------------------------------------------------------
+  loopf2: --处理已核销完角色
+  for v2 as c2 cursor for
+    select pfphdm, rq_o, pc_o 
+    from session.jsbhd 
+    where (pfphdm, pc_o) in (
+        select m.pfphdm ,sum(PHSCPC) as ytlpc
+        from YYZY.T_YYZY_SJTL_SCPC as m
+          inner join (
+            select pfphdm, min(ksrq) from YYZY.T_YYZY_RSCJHB_WHB group by pfphdm
+          ) as k(pfphdm, ksrq)
+            on m.pfphdm = k.pfphdm
+        where date(tlsj)<k.ksrq
+          AND DATE(m.TLSJ)>=(
+              SELECT DATE(CSZ)
+              FROM YYZY.T_YYZY_STCS
+              WHERE CSMC = 'ZSPFFSQSRQ'
+              FETCH FIRST 1 ROW ONLY
+            )
+        group by m.pfphdm
+      )
+  do
+    update YYZY.T_YYZY_JSTZ_WHB as tgt 
+    set ksrq = (select min(ksrq) from YYZY.T_YYZY_RSCJHB_WHB where pfphdm = v2.pfphdm)
+    where pfphdm = v2.pfphdm and ksrq = v2.rq_o + 1 day 
+    ;
+    update YYZY.T_YYZY_JSTZ_WHB as tgt 
+    set jsrq = (select min(ksrq)-1 day from YYZY.T_YYZY_RSCJHB_WHB where pfphdm = v2.pfphdm)
+    where pfphdm = v2.pfphdm and jsrq = v2.rq_o 
+    ;
+  end for loopf2; 
+  
   delete from session.jsbhd where pc_o is null or rq_n is null or pc_n is null; 
   
 ----------------------------------------------------------------------------'
@@ -368,11 +354,11 @@ BEGIN ATOMIC
     if v1.rq_o <= jsrqo then 
       update YYZY.T_YYZY_JSTZ_WHB as tgt 
       set ksrq = v1.rq_n + 1 day 
-      where pfphdm = v1.pfphdm and ksrq = rq_o + 1 day 
+      where pfphdm = v1.pfphdm and ksrq = v1.rq_o + 1 day 
       ;
       update YYZY.T_YYZY_JSTZ_WHB as tgt 
       set jsrq = v1.rq_n 
-      where pfphdm = v1.pfphdm and jsrq = rq_o 
+      where pfphdm = v1.pfphdm and jsrq = v1.rq_o 
       ;
     elseif v1.rq_o > jsrqo then 
 --      delete from YYZY.T_YYZY_JSTZ_WHB 
@@ -390,35 +376,7 @@ BEGIN ATOMIC
   end for lp1;
   
   delete from YYZY.T_YYZY_JSTZ_WHB where jsrq<ksrq;
-  
-/*  
-  update YYZY.T_YYZY_JSTZ_WHB as tgt  --开始日期更新
-  set ksrq = (select rq_n from session.jsbhd where pfphdm = tgt.pfphdm and rq_o = tgt.ksrq)
-  where exists(
-        select 1 from session.jsbhd as c
-        where pfphdm = tgt.pfphdm and rq_o = tgt.ksrq 
-          and exists(
-            select 1
-            from session.sjfw_o
-            where pfphdm = m.pfphdm
-              and c.rq_o between ksrq and jsrq
-          )
-      ) 
-  ;
-  update YYZY.T_YYZY_JSTZ_WHB as tgt  --结束日期更新
-  set jsrq = (select (rq_n - 1 day) from session.jsbhd where pfphdm = tgt.pfphdm and rq_o = tgt.jsrq + 1 day)
-  where exists(
-        select 1 from session.jsbhd as c
-        where pfphdm = tgt.pfphdm and rq_o = tgt.jsrq + 1 day
-          and exists(
-            select 1
-            from session.sjfw_o
-            where pfphdm = m.pfphdm
-              and c.rq_o between ksrq and jsrq
-          )
-      ) 
-  ;
-  */
+
 ----------------------------------------------------------------------------
   --数据异常情况监测, 同个牌号中出现了不同批次的角色变化日期为同一天
   if (select count(*) from session.jsbhd group by pfphdm, rq_n having count(pc_n)>1)>0 then
@@ -534,4 +492,3 @@ END LB_MAIN;
 
 COMMENT ON PROCEDURE YYZY.P_YYZY_SDPF_JSGX() IS '锁定配方角色更新';
 
-GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_SDPF_JSGX () TO USER APPUSR;
