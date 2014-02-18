@@ -94,6 +94,7 @@ BEGIN ATOMIC
   )
   select pfphdm, jhny, round(jhpc,0) as jhpc, '1' as jhlx
   from tb_yjhpc
+  where pfphdm is not null --bug修改 2014-02-18增加
   ;
   ----------------------------------------------------------------------------------------
   --2外加工本地制丝
