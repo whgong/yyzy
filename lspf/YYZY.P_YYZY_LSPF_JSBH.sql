@@ -193,7 +193,7 @@ BEGIN ATOMIC
     --前一天IP_RQ - 1 day的计划增加lc_i_clpc
     merge into YYZY.T_YYZY_RSCJH_LSB as t 
     using (values(IP_RQ - 1 day, lc_i_clpc, lc_i_clpc*yyzy.f_dpcl(IP_PFPHDM))) as s(jhrq, jhpc, jhcl) 
-      on t.jhrq = s.jhrq 
+      on t.jhrq = s.jhrq and t.pfphdm = IP_PFPHDM 
     when matched then 
       update set JHCL = s.jhcl + t.jhcl, 
         JHPC = s.jhpc + t.jhpc, 
