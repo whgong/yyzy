@@ -55,6 +55,14 @@ BEGIN ATOMIC
   --清理临时表
   delete from YYZY.T_YYZY_TMP_RSCPCB; 
   delete from YYZY.T_YYZY_TMP_RSCJHB_WHB; 
+  
+  --合并牌号拆分为日数据
+  insert into YYZY.T_YYZY_TMP_RSCPCB(pfphdm, jhrq, jhpc)
+  select PFPHDM, riqi, JHPC_AVG
+  from YYZY.T_YYZY_RSCJHB_WHB ,DIM.T_DIM_YYZY_DATE
+  where pfphdm in (select pfphdm from YYZY.T_YYZY_FZJG_PHB)
+    and riqi between ksrq and jsrq
+  ;
   ---------------------------------------------------------------------------------------
   --计算计划的开始、结束时间
   select min(ksrq),max(jsrq) into lc_d_jhksrq, lc_d_jhjsrq 
@@ -70,7 +78,7 @@ BEGIN ATOMIC
   do 
     -----------------------------------------------------------------------------------
     --获得生产批次
-    set lc_d_yksrq1 = date(to_date(char(nf*100*100+yf*100+1),'YYYYMMDD')); 
+    set lc_d_yksrq1 = date(to_date(char(v1.nf*100*100+v1.yf*100+1),'YYYYMMDD')); 
     set lc_d_yjsrq = lc_d_yksrq1 + 1 month - 1 day; 
     set lc_d_yksrq = (case when lc_d_yksrq1<lc_d_jhksrq then lc_d_jhksrq else lc_d_yksrq1 end); 
     
@@ -177,28 +185,25 @@ BEGIN ATOMIC
     end for loopf3; --以上为 依次计算各分组的生产计划批次 
     -----------------------------------------------------------------------------------
     --处理原合并规格的生产批次
-    delete from YYZY.T_YYZY_RSCJHB_WHB 
-    where pfphdm = v1.pfphdm 
-      and (ksrq>=lc_d_yksrq and jsrq<=lc_d_yjsrq)
-    ;
-    update YYZY.T_YYZY_RSCJHB_WHB 
-    set jsrq = lc_d_yksrq -  1 day
-    where pfphdm = v1.pfphdm 
-      and lc_d_yksrq between ksrq and jsrq
-    ;
-    update YYZY.T_YYZY_RSCJHB_WHB 
-    set ksrq = lc_d_yjsrq + 1 day
-    where pfphdm = v1.pfphdm 
-      and lc_d_yjsrq between ksrq and jsrq
-    ;
     set lc_i_js = int(lc_n_syscpc * 1.000000 / (days(lc_d_yjsrq) - days(lc_d_yksrq) + 1)); 
     set lc_i_ys = mod(int(lc_n_syscpc), (days(lc_d_yjsrq) - days(lc_d_yksrq) + 1)); 
-    insert into YYZY.T_YYZY_RSCJHB_WHB(pfphdm, ksrq, jsrq, jhpc_avg) 
-    values 
-      (v1.pfphdm, lc_d_yjsrq - (lc_i_ys - 1) day, lc_d_yjsrq, lc_i_js+1), 
-      (v1.pfphdm, lc_d_yksrq, lc_d_yjsrq - lc_i_ys day, lc_i_js) 
+    
+    delete from YYZY.T_YYZY_TMP_RSCPCB --删除同时间段内同牌号数据
+    where pfphdm = v1.PFPHDM 
+        and jhrq between lc_d_yksrq and lc_d_yjsrq 
     ; 
-    delete from YYZY.T_YYZY_RSCJHB_WHB where pfphdm = v1.pfphdm and ksrq>jsrq; 
+    insert into YYZY.T_YYZY_TMP_RSCPCB(pfphdm, jhrq, jhpc) 
+    select v1.PFPHDM as pfphdm, RIQI as jhrq, 
+      (case 
+        when riqi between lc_d_yjsrq - (lc_i_ys - 1) day and lc_d_yjsrq 
+          then lc_i_js + 1 --月末部分批次 = 基数+1
+        when riqi between lc_d_yksrq and lc_d_yjsrq - lc_i_ys day 
+          then lc_i_js --月头部分批次 = 基数
+        else 0 
+      end) as jhpc 
+    from DIM.T_DIM_YYZY_DATE 
+    where riqi between lc_d_yksrq and lc_d_yjsrq 
+    ;
     
   end for loopf1; 
   -----------------------------------------------------------------------------------
@@ -217,6 +222,9 @@ BEGIN ATOMIC
   from YYZY.T_YYZY_TMP_RSCPCB 
   ; 
   --处理分组加工牌号生产计划 合并相同批次数的日期
+  delete from YYZY.T_YYZY_RSCJHB_WHB --删除原合并牌号数据
+  where pfphdm in (select pfphdm from YYZY.T_YYZY_FZJG_PHB) 
+  ; 
   insert into YYZY.T_YYZY_RSCJHB_WHB(pfphdm, ksrq, jsrq, jhpc_avg) 
   with tb_jhr as ( 
     select pfphdm, jhrq, jhpc, 
