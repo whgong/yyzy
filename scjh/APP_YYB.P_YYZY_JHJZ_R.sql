@@ -301,12 +301,13 @@ begin
 			/*
 			2013-01-11修改，由于未加载季度生产计划，年度计划减去的实际是月到日的生产计划，因此月度生产计划需要加上历史数据，
 			*/			
-			union all
-            select pfphdm,year(jhrq) as jhnf,jhcl
-              from YYZY.T_YYZY_RSCJH_LSB
-			 where jhrq<START_DATE 
-			   and year(jhrq)>=year(START_DATE)
-			Union all
+      union all
+select coalesce(c.pfphdm, m.pfphdm) as pfphdm,year(jhrq) as jhnf,jhcl
+      from YYZY.T_YYZY_RSCJH_LSB as m left join YYZY.T_YYZY_FZJG_PHB as c
+	    on m.pfphdm = c.fzphdm and c.bl=1
+      where jhrq<current_date 
+      and year(jhrq)>=year(START_DATE)
+      Union all
             select pfphdm,year(jhrq) as jhnf,jhcl_avg as jhcl
             from session.tmp2
             --where month(jhrq)>6  --2013-01-11 注释 ，由于未加载季度生产计划，因此不对月到日的生产计划做限制
@@ -322,7 +323,7 @@ begin
             on a.pfphdm=b.pfphdm 
           left join jjh_add as c 
             on a.pfphdm=c.pfphdm
-		   and b.jhnf=c.jhnf
+       and b.jhnf=c.jhnf
           where b.jhnf is not null or c.jhnf is not null
         ),
         cl_ksjs as (
