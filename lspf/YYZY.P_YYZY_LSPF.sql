@@ -100,6 +100,7 @@ BEGIN ATOMIC
                             ) 
                       ),date('1980-01-01')) 
     ; 
+    set lc_d_tljsrq = (case when lc_d_tljsrq<lc_d_tlksrq then lc_d_tlksrq else lc_d_tljsrq end);
     set lc_d_tljsrq = (case when lc_d_tljsrq>IP_PFZXRQ then IP_PFZXRQ else lc_d_tljsrq end);
     
     --特殊处理,若牌号长久没有核销数据,只计算最后一天
