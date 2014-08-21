@@ -194,9 +194,10 @@ BEGIN ATOMIC
           ) as l 
             on m.yydm = l.yydm and m.YYNF = l.YYNF 
             and m.KCLX = l.KCLX and m.YYPC = l.YYPC
-      ) as s on t.syrq = IP_RQ 
-        and t.yydm = s.yydm and t.yynf=s.yynf and t.yypc = s.yypc 
-        and t.kclx = s.kclx and t.zxsx = s.zxsx 
+      ) as s 
+        on t.pfphdm = IP_PFPHDM and t.jsdm = IP_JSDM and t.syrq = IP_RQ 
+          and t.yydm = s.yydm and t.yynf=s.yynf and t.yypc = s.yypc 
+          and t.kclx = s.kclx and t.zxsx = s.zxsx 
     when matched then 
       update set t.YYSYL = t.YYSYL + s.yyfpl 
     when not matched then 
