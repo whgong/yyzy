@@ -1,4 +1,4 @@
-SET SCHEMA YYZYUSR ;
+﻿SET SCHEMA YYZYUSR ;
 
 SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,SYSIBMADM,YYZYUSR;
 
@@ -17,8 +17,8 @@ CREATE PROCEDURE YYZY.P_YYZY_WJG_PHSD
   INHERIT SPECIAL REGISTERS
 
 BEGIN  
-  DECLARE V_LSB_RQ DATE;  -- ��ʷ���е����� �������
-  DECLARE V_WHB_RQ DATE;  -- ά�����е����� ��С����
+  DECLARE V_LSB_RQ DATE;  -- 历史表中的日期 最大日期
+  DECLARE V_WHB_RQ DATE;  -- 维护表中的日期 最小日期
   
   DECLARE V_KSSYL DECIMAL(14,2);
   DECLARE V_JSSYL DECIMAL(14,2);
@@ -46,40 +46,40 @@ BEGIN
     WHERE (PFPHDM,BBH)IN(SELECT PFPHDM,MAX(BBH) FROM YYZY.T_YYZY_WJG_PHSD GROUP BY PFPHDM )
   )
   DO
-    IF ( V_BJ = 1 ) THEN --  �ƻ�ת��ʷ
+    IF ( V_BJ = 1 ) THEN --  计划转历史
       SELECT VALUE(MAX(JHRQ),CURRENT DATE) INTO V_LSB_RQ FROM YYZY.T_YYZY_RSCJH_LSB WHERE PFPHDM=V_CUR_PHSD.PFPHDM ;
       SELECT VALUE(MIN(KSRQ),CURRENT DATE) INTO V_WHB_RQ FROM YYZY.T_YYZY_RSCJHB_WHB WHERE PFPHDM=V_CUR_PHSD.PFPHDM ;
       
       IF V_LSB_RQ>=V_WHB_RQ THEN
-        -- ɾ���Ѿ�ת��ʷ������ (���ڵ�ǰ���ڵ������Ѿ�ת��ʷ)
+        -- 删除已经转历史的数据 (大于当前日期的数据已经转历史)
         DELETE FROM YYZY.T_YYZY_RSCJHB_WHB WHERE PFPHDM=V_CUR_PHSD.PFPHDM  AND JSRQ<=V_LSB_RQ;
-        --����ֻ�в���ת��ʷ�����ݵ� ��ʼʱ�� 
+        --更改只有部分转历史的数据的 起始时间 
         UPDATE YYZY.T_YYZY_RSCJHB_WHB SET KSRQ=V_LSB_RQ+1 DAY 
         WHERE PFPHDM=V_CUR_PHSD.PFPHDM  AND V_LSB_RQ BETWEEN KSRQ AND JSRQ+1 DAY ;
       END IF; 
     
-      -- �������ƻ� ת��ʷ(������ ��ӹ������ƺŻ��������ڸĴ�)
+      -- 日生产计划 转历史(新增加 外加工锁定牌号或将锁定日期改大)
       WHILE V_LSB_RQ<V_CUR_PHSD.SDSJ DO
         INSERT INTO YYZY.T_YYZY_RSCJH_LSB(PFPHDM,JHRQ,JHCL,JHPC,BBRQ)
         SELECT PFPHDM,KSRQ,JHCL_AVG,JHPC_AVG,BBRQ
         FROM YYZY.T_YYZY_RSCJHB_WHB 
         WHERE KSRQ= V_LSB_RQ + 1 DAY AND  PFPHDM=V_CUR_PHSD.PFPHDM;
         
-        -- ɾ���Ѿ�ת��ʷ������ 
+        -- 删除已经转历史的数据 
         DELETE FROM YYZY.T_YYZY_RSCJHB_WHB WHERE PFPHDM=V_CUR_PHSD.PFPHDM  AND JSRQ<=V_LSB_RQ+1 DAY;
-        --����ֻ�в���ת��ʷ�����ݵ� ��ʼʱ�� 
+        --更改只有部分转历史的数据的 起始时间 
         UPDATE YYZY.T_YYZY_RSCJHB_WHB SET KSRQ=V_LSB_RQ+2 DAY 
         WHERE PFPHDM=V_CUR_PHSD.PFPHDM AND JSRQ>V_LSB_RQ + 1 DAY AND KSRQ<= V_LSB_RQ + 1 DAY ;
         
         SET V_LSB_RQ=V_LSB_RQ+1 DAY ;
       END WHILE;     
     
-    ELSEIF (V_BJ = 2) THEN --ZXPF_WHB ת��ʷ  
-      --����zxpf_lsb����
+    ELSEIF (V_BJ = 2) THEN --ZXPF_WHB 转历史  
+      --更新zxpf_lsb数据
       SELECT VALUE(MAX(JSRQ),CURRENT DATE) INTO V_LSB_RQ FROM YYZY.T_YYZY_ZXPF_LSB WHERE PFPHDM=V_CUR_PHSD.PFPHDM ;
       SELECT VALUE(MIN(KSRQ),CURRENT DATE) INTO V_WHB_RQ FROM YYZY.T_YYZY_ZXPF_WHB WHERE PFPHDM=V_CUR_PHSD.PFPHDM ;
       
-      --�������ƻ�ƽ����ÿһ��
+      --将生产计划平均到每一天
       DELETE FROM SESSION.V_TAB_JHL;
       INSERT INTO SESSION.V_TAB_JHL(PFPHDM,JSDM,JHRQ,XHYZL,YYDM,YYNF)  
       WITH WHB AS (
@@ -122,7 +122,7 @@ BEGIN
         ON A.PFPHDM=B.PFPHDM AND A.JSDM=B.JSDM AND A.JHRQ BETWEEN B.KSRQ AND B.JSRQ 
       ;
           
-      IF (V_WHB_RQ<=V_LSB_RQ) THEN --��ִ���䷽��С���� < ��ʷ�䷽�������
+      IF (V_WHB_RQ<=V_LSB_RQ) THEN --若执行配方最小日期 < 历史配方最大日期
         DELETE FROM YYZY.T_YYZY_ZXPF_WHB WHERE PFPHDM=V_CUR_PHSD.PFPHDM AND JSRQ<=V_LSB_RQ ;
          
         UPDATE YYZY.T_YYZY_ZXPF_WHB AS A 
@@ -144,7 +144,7 @@ BEGIN
         ;
       END IF;
       IF ( V_LSB_RQ < V_CUR_PHSD.SDSJ ) THEN 
-        -- ����ѭ����ɫ�е���Ҷ
+        -- 依次循环角色中的烟叶
         FOR V_JS_YY AS (
             SELECT PFPHDM,JSDM,YYDM,YYNF,KSRQ,JSRQ,KSSYL,ZXSX,YYFPL,JSSYL,ZLYYBJ,ZPFBJ,KCLX
             FROM YYZY.T_YYZY_ZXPF_WHB 
@@ -152,9 +152,9 @@ BEGIN
              ORDER BY JSDM,KSRQ,ZXSX 
           )
         DO
-          -- �� WHB �е���ҶjsrqС������ʱ��ʱ��ȫ��ת��ʷ   -- IF2
+          -- 当 WHB 中的烟叶jsrq小于锁定时间时，全部转历史   -- IF2
           IF ( V_JS_YY.JSRQ <= V_CUR_PHSD.SDSJ ) THEN  
-            -- ��ʷ�䷽�д��ڸ�����¼����Ҫ������ص�����   --  IF1
+            -- 历史配方中存在该条记录，需要更改相关的数据   --  IF1
             IF EXISTS(SELECT * FROM YYZY.T_YYZY_ZXPF_LSB 
                     WHERE PFPHDM=V_JS_YY.PFPHDM AND JSDM=V_JS_YY.JSDM 
                       AND YYDM=V_JS_YY.YYDM AND YYNF=V_JS_YY.YYNF AND KCLX=V_JS_YY.KCLX 
@@ -166,14 +166,14 @@ BEGIN
                   AND YYDM=V_JS_YY.YYDM AND YYNF=V_JS_YY.YYNF AND KCLX=V_JS_YY.KCLX 
                   AND JSRQ=V_JS_YY.KSRQ-1 DAY ; 
             ELSE
-               -- ��ʷ�䷽���в����ڸ�����¼����Ҫ�����¼����ʷ�䷽��
+               -- 历史配方表中不存在该条记录，需要插入记录到历史配方中
                INSERT INTO YYZY.T_YYZY_ZXPF_LSB(PFPHDM,JSDM,YYDM,YYNF,KSRQ,JSRQ,YYFPL,ZXSX,KSSYL,JSSYL,ZLYYBJ,ZPFBJ,KCLX)
                VALUES(V_JS_YY.PFPHDM, V_JS_YY.JSDM, V_JS_YY.YYDM, V_JS_YY.YYNF, V_JS_YY.KSRQ, V_JS_YY.JSRQ,
                   V_JS_YY.YYFPL, V_JS_YY.ZXSX, V_JS_YY.KSSYL, V_JS_YY.JSSYL, V_JS_YY.ZLYYBJ, 
                   V_JS_YY.ZPFBJ, V_JS_YY.KCLX)  ;
             END IF;  
             -- end of IF1
-            --ɾ�� whb �е�����
+            --删除 whb 中的数据
             DELETE FROM YYZY.T_YYZY_ZXPF_WHB 
             WHERE   PFPHDM=V_JS_YY.PFPHDM AND JSDM=V_JS_YY.JSDM 
               AND YYDM=V_JS_YY.YYDM AND YYNF=V_JS_YY.YYNF 
@@ -181,15 +181,15 @@ BEGIN
               AND JSRQ=V_JS_YY.JSRQ AND KSRQ=V_JS_YY.KSRQ
               AND ZPFBJ=V_JS_YY.ZPFBJ
             ;
-          -- ������Ҷ����Ҷ�� ��ʼʱ�� �� ����ʱ�� ֮�䣬��Ҫ��ȡ��ص�����
+          -- 锁定烟叶在烟叶的 开始时间 和 结束时间 之间，需要截取相关的数据
           ELSEIF(V_CUR_PHSD.SDSJ >= V_JS_YY.KSRQ AND V_CUR_PHSD.SDSJ < V_JS_YY.JSRQ) THEN 
-             -- ��ʷ�䷽�д��ڸ�����¼����Ҫ������ص�����   --LS
+             -- 历史配方中存在该条记录，需要更改相关的数据   --LS
             IF EXISTS(SELECT * FROM YYZY.T_YYZY_ZXPF_LSB 
                       WHERE PFPHDM=V_JS_YY.PFPHDM AND JSDM=V_JS_YY.JSDM 
                         AND YYDM=V_JS_YY.YYDM AND YYNF=V_JS_YY.YYNF AND KCLX=V_JS_YY.KCLX 
                         AND JSRQ=V_JS_YY.KSRQ-1 DAY
                   ) THEN 
-               -- ������ʷ��  
+               -- 更改历史表  
                UPDATE YYZY.T_YYZY_ZXPF_LSB SET(YYFPL,JSRQ,ZXSX,JSSYL,ZLYYBJ,ZPFBJ)
                   =( YYFPL+(SELECT SUM(XHYZL) FROM SESSION.V_TAB_JHL 
                         WHERE PFPHDM=V_JS_YY.PFPHDM AND JSDM=V_JS_YY.JSDM AND YYDM=V_JS_YY.YYDM
@@ -204,7 +204,7 @@ BEGIN
                   AND YYDM=V_JS_YY.YYDM AND YYNF=V_JS_YY.YYNF AND KCLX=V_JS_YY.KCLX 
                   AND JSRQ=V_JS_YY.KSRQ-1 DAY ;                   
               ELSE
-              -- ��ʷ���в����ڸü�¼����Ҫ������ص�����
+              -- 历史表中不存在该记录，需要插入相关的数据
               INSERT INTO YYZY.T_YYZY_ZXPF_LSB(PFPHDM,JSDM,YYDM,YYNF,KSRQ,JSRQ,YYFPL,ZXSX,KSSYL,JSSYL,ZLYYBJ,ZPFBJ,KCLX)
                 VALUES(V_JS_YY.PFPHDM, 
                     V_JS_YY.JSDM, 
@@ -228,7 +228,7 @@ BEGIN
                   ) ;                  
               END IF;  
               -- LS
-             --����ά����  
+             --更改维护表  
               UPDATE YYZY.T_YYZY_ZXPF_WHB SET (KSRQ,KSSYL,YYFPL,ZXSX)=( V_CUR_PHSD.SDSJ+1 DAY ,
                    (SELECT SUM(XHYZL) FROM SESSION.V_TAB_JHL 
                       WHERE PFPHDM=V_JS_YY.PFPHDM AND JSDM=V_JS_YY.JSDM AND YYDM=V_JS_YY.YYDM
@@ -259,7 +259,7 @@ COMMENT ON PROCEDURE YYZY.P_YYZY_WJG_PHSD
  (INTEGER, 
   VARCHAR(5000)
  ) 
-  IS '��ӹ��ƺ�����';
+  IS '外加工牌号锁定';
 
 GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_WJG_PHSD
  (INTEGER, 
