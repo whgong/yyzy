@@ -27,8 +27,8 @@ Public Function dorg_initProdTable(ws As Worksheet, phlist As Collection)
     '添加计算按钮 并设置超链接 目标指向单元格自身
     r = modGlobalVar.ws1_r4
     c = modGlobalVar.ws1_c4
-    ws.Range("B3:AF3").Clear
-    For j = c To (c + 30)
+    ws.Range("B3:EF3").Clear
+    For j = c To (c + 132)
         With ws
             .Hyperlinks.Add _
                     anchor:=.Cells(r, j), _
@@ -44,7 +44,7 @@ Public Function dorg_initProdTable(ws As Worksheet, phlist As Collection)
 End Function
 
 '分牌号的领料表 数据组织
-Public Function dorg_generateSupplyTableList(ByRef stl As Collection)
+Public Function dorg_generateSupplyTableList(ByRef stl As Collection, dt As Date)
     '本函数由业务处理模块调用,stl为领料单集合
     Dim r As Integer, c As Integer
     Dim ws As Worksheet
@@ -68,11 +68,10 @@ Public Function dorg_generateSupplyTableList(ByRef stl As Collection)
         '复制模板
         mb.Copy
         ws.Activate
-        ws.Cells(i, c).Select
         ws.Cells(i, c).Activate
         ws.Paste
         '更新日期、牌号名称、总投产批次
-        ws.Cells(i, c).Offset(0, 0).Value = st.llnf & "年" & st.llyf & "月" & st.llr & "日"
+        ws.Cells(i, c).Offset(0, 0).Value = dt
         ws.Cells(i, c).Offset(0, 1).Value = st.pfph
         ws.Cells(i, c).Offset(1, 2).Value = st.llpc
         i = i + 3
@@ -97,7 +96,7 @@ Public Function dorg_generateSupplyTableList(ByRef stl As Collection)
 End Function
 
 '全牌号的领料表 数据组织
-Public Function dorg_generateSupplyTableListT(ByRef st_t As clsSupplyTable)
+Public Function dorg_generateSupplyTableListT(ByRef st_t As clsSupplyTable, dt As Date)
     Dim r As Integer, c As Integer
     
     Dim ws As Worksheet
@@ -116,11 +115,10 @@ Public Function dorg_generateSupplyTableListT(ByRef st_t As clsSupplyTable)
     '复制模板
     mb.Copy
     ws.Activate
-    ws.Cells(i, c).Select
     ws.Cells(i, c).Activate
     ws.Paste
     '更新日期、牌号名称、总投产批次
-    ws.Cells(i, c).Offset(0, 0).Value = st_t.llnf & "年" & st_t.llyf & "月" & st_t.llr & "日"
+    ws.Cells(i, c).Offset(0, 0).Value = dt
     ws.Cells(i, c).Offset(0, 1).Value = st_t.pfph
     i = i + 2
     '更新烟叶

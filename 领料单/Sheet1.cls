@@ -17,7 +17,7 @@ Private Sub Worksheet_FollowHyperlink(ByVal Target As Hyperlink)
         col = Target.Range.Column
         col = col - 3
         '调用计算逻辑
-        modAction.computeSupplyList_Action col
+        modAction.computeSupplyList_Action col, Target.Range.Cells(1, 1).Offset(1, 0).Value
         
     End If
     

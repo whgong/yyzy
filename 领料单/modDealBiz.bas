@@ -40,7 +40,7 @@ Public Function dbiz_computeSupplylistT(ByRef stl As Collection) As clsSupplyTab
 End Function
 
 '领料表集合计算
-Public Function dbiz_computeSupplyList(da As Integer)
+Public Function dbiz_computeSupplyList(da As Integer, dt As Date)
 
     Dim pnums As Collection
     Dim pnum As clsFormulaProdNum
@@ -64,11 +64,11 @@ Public Function dbiz_computeSupplyList(da As Integer)
         End If
     Next
     
-    dorg_generateSupplyTableList stl
+    dorg_generateSupplyTableList stl, dt
     
     Set st_t = dbiz_computeSupplylistT(stl)
     
-    dorg_generateSupplyTableListT st_t
+    dorg_generateSupplyTableListT st_t, dt
     'dorg_modifySuppliedNum stl
     
     MsgBox "计算领料单完成"
