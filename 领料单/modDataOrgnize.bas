@@ -97,6 +97,11 @@ End Function
 
 '全牌号的领料表 数据组织
 Public Function dorg_generateSupplyTableListT(ByRef st_t As clsSupplyTable, dt As Date)
+
+    If st_t.supTobaccos.Count = 0 Then
+        Exit Function
+    End If
+
     Dim r As Integer, c As Integer
     
     Dim ws As Worksheet
