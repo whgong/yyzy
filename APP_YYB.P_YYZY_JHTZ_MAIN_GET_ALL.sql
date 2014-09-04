@@ -224,6 +224,8 @@ BEGIN
 	--分组加工生产计划
     call YYZY.P_YYZY_SCJH_FZJG;
     
+    call YYZY.P_YYZY_RSCJH_SDYCCL; --锁定部分压缩至3月内
+    
     --角色更新(按最新的计划调整)
     --修正生产计划
     CALL YYZY.P_YYZY_SDPF_JSGX();
@@ -241,6 +243,8 @@ BEGIN
     --锁定配方更新
     CALL YYZY.P_YYZY_SDPFGX6(); --6要素
     CALL YYZY.P_YYZY_SDPFGX7(); --7要素
+    
+    call YYZY.P_YYZY_RSCJH_SDJSZTCL; --锁定结束整天处理
     
     --更新ZXPF_LSB数据
     MERGE INTO YYZY.T_YYZY_ZXPF_LSB AS E  
