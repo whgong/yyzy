@@ -256,12 +256,24 @@ BEGIN ATOMIC
 ---------------------------------------------------------------------------------
   --获取角色变化点信息
   insert into session.jsbhd(pfphdm, rq_o, pc_o, rq_n, pc_n)
-  with jstz_bhrq as ( --角色变化开始日期
+  with
+  tb_sjfw as (
+    select pfphdm, min(ksrq) as ksrq, max(jsrq) as jsrq
+    from (
+        select pfphdm, ksrq, jsrq
+        from session.sjfw
+        union all
+        select pfphdm, ksrq, cast(null as date) as jsrq
+        from session.sjfw_o
+      ) as t
+	  group by pfphdm
+  )
+  , jstz_bhrq as ( --角色变化开始日期
     select DISTINCT pfphdm, jsrq as bhrq --搜索开始点在范围内的角色变化点
     from YYZY.T_YYZY_JSTZ_WHB as m
     where exists (
           select 1
-          from session.sjfw
+          from tb_sjfw
           where pfphdm = m.pfphdm 
             and m.jsrq between ksrq and jsrq
         ) 
