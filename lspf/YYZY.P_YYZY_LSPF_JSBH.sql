@@ -115,12 +115,12 @@ BEGIN ATOMIC
   ) 
   , t_jsbhpc as ( --计算变化日期前的批次
     select pfphdm, jsdm, ksrq, 
-      (select sum(scpc) from t_scpc_ph where pfphdm = m.pfphdm and jhrq<m.ksrq) as pc 
+      coalesce((select sum(scpc) from t_scpc_ph where pfphdm = m.pfphdm and jhrq<m.ksrq),0) as pc 
     from t_jsbhd as m 
     order by pfphdm, jsdm, ksrq 
   ) 
   select * from t_jsbhpc 
-  where pc is not null and pc>0 
+  where pc is not null and pc>=0 
   order by pfphdm, pc, jsdm, ksrq 
   ; 
   
