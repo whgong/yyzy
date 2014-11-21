@@ -5,7 +5,8 @@ SET CURRENT PATH = SYSIBM,SYSFUN,SYSPROC,ETLUSR;
 
 CREATE PROCEDURE yyzy.p_yyzy_rscjh_kbbz( 
   in IP_KSRQ date, 
-  in IP_JSRQ date 
+  in IP_JSRQ date, 
+  IN IP_PFPHDM INTEGER
 ) 
   SPECIFIC PROC_YYZY_rscjh_kbbz 
   LANGUAGE SQL
@@ -64,13 +65,15 @@ BEGIN ATOMIC
   insert into session.T_YYZY_RSCJHB(pfphdm, jhrq)
   with rq_ycz as (
     select pfphdm, riqi 
-    from YYZY.T_YYZY_RSCJHB_WHB, dim.t_dim_yyzy_date
-    where riqi between ksrq and jsrq
+    from YYZY.T_YYZY_RSCJHB_WHB, dim.t_dim_yyzy_date 
+    where riqi between ksrq and jsrq 
+      and pfphdm = IP_PFPHDM 
   )
   , rq_all as (
     select pfphdm, riqi
     from (select distinct pfphdm from YYZY.T_YYZY_RSCJHB_WHB), dim.t_dim_yyzy_date
     where riqi between IP_KSRQ and IP_JSRQ
+      and pfphdm = IP_PFPHDM 
   )
   , rq_dcl as (
     select pfphdm, riqi from rq_all 
@@ -105,4 +108,4 @@ BEGIN ATOMIC
   
 END LB_MAIN; 
 
-COMMENT ON PROCEDURE yyzy.p_yyzy_rscjh_kbbz(date, date) IS '日生产计划 空白部分补全'; 
+COMMENT ON PROCEDURE yyzy.p_yyzy_rscjh_kbbz(date, date, INTEGER) IS '日生产计划 空白部分补全'; 
