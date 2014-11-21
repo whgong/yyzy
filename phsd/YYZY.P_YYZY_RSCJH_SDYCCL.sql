@@ -119,6 +119,10 @@ BEGIN ATOMIC
       select PFPHDM, cast(null as date) as mjsrq, 0 as JHPC, SYPC 
       from session.TB_SDSYPC 
     ) as t1 
+    where not exists (
+        select 1 from JYHSF.T_JYHSF_PFPXB 
+        where sdlx = '1' and pfphdm = t1.pfphdm
+      )
     group by pfphdm 
     having sum(SYPC)-sum(jhpc) > 0 
   )
