@@ -23,13 +23,13 @@ BEGIN ATOMIC
   DECLARE SQL_STMT VARCHAR(2000); 
   /* DECLARE USER-DEFINED VARIABLES */ 
   -- DECLARE V_SEPARATOR VARCHAR(50) DEFAULT ','; 
-  declare EXE_SQL           varchar(20000);     --¶¯Ì¬SQL
-  declare v_gengpeng_jm     varchar(8000); 	    --¹£Åò½âÃÜ
-  declare v_gengpeng_gs     varchar(8000);		--¹£Åò¼ÆËã¹«Ê½
-  declare v_gengpeng_cx     varchar(8000);		--¹£Åò½á¹û²éÑ¯
-  declare v_gengpeng_jm_p   varchar(8000); 	    --¹£Åò½âÃÜ_Åò
-  declare v_gengpeng_gs_p   varchar(8000);		--¹£Åò¼ÆËã¹«Ê½_Åò
-  declare v_gengpeng_cx_p   varchar(8000);		--¹£Åò½á¹û²éÑ¯_Åò
+  declare EXE_SQL           varchar(20000);     --åŠ¨æ€SQL
+  declare v_gengpeng_jm     varchar(8000); 	    --æ¢—è†¨è§£å¯†
+  declare v_gengpeng_gs     varchar(8000);		--æ¢—è†¨è®¡ç®—å…¬å¼
+  declare v_gengpeng_cx     varchar(8000);		--æ¢—è†¨ç»“æœæŸ¥è¯¢
+  declare v_gengpeng_jm_p   varchar(8000); 	    --æ¢—è†¨è§£å¯†_è†¨
+  declare v_gengpeng_gs_p   varchar(8000);		--æ¢—è†¨è®¡ç®—å…¬å¼_è†¨
+  declare v_gengpeng_cx_p   varchar(8000);		--æ¢—è†¨ç»“æœæŸ¥è¯¢_è†¨
   
   /* DECLARE STATIC CURSOR */
   -- DECLARE C1 CURSOR /*WITH RETURN*/ FOR
@@ -134,7 +134,7 @@ BEGIN ATOMIC
       
   end for lp1;
 -----------------------------------------------------------------------------------
-  --»ñµÃ¸÷ÅÆºÅµÄÃ¿ÈÕËùĞèºÄÓÃÁ¿
+  --è·å¾—å„ç‰Œå·çš„æ¯æ—¥æ‰€éœ€è€—ç”¨é‡
   delete from yyzy.t_yyzy_tmp_yyxhtjb;
   insert into yyzy.t_yyzy_tmp_yyxhtjb(pfphdm,jsdm,ksrq,jsrq,hl_d)
   select pfphdm,JSDM,
@@ -166,7 +166,7 @@ BEGIN ATOMIC
   order by pfphdm,JSDM,(case when ad1<bd1 then bd1 else ad1 end)
   ; 
   
-  --°´Ê±¼ä¶ÎÒÀ´Î´¦Àí
+  --æŒ‰æ—¶é—´æ®µä¾æ¬¡å¤„ç†
   delete from session.t_yyzy_rscjhb_whb;
   lp2:
   for v2 as c2 cursor for
@@ -184,7 +184,6 @@ BEGIN ATOMIC
       from yyzy.t_yyzy_tmp_yyxhtjb as m 
         inner join (values (v2.ksrq,v2.jsrq)) as t(ksd, jsd)
           on (ksrq<=jsd and ksd<=jsrq)
-      where m.hl_d <> 0
     )
     , tb_hyzl as (
       select pfphdm, sum(hl_d*(days(jsrq)-days(ksrq)+1)) as hyzl
@@ -208,7 +207,7 @@ BEGIN ATOMIC
     ;
   end for lp2;
   
-  --ÈëÄ¿±ê±í
+  --å…¥ç›®æ ‡è¡¨
   delete from yyzy.t_yyzy_rscjhb_whb as e where exists (select 1 from session.t_yyzy_rscjhb_whb where pfphdm = e.pfphdm);
   insert into yyzy.t_yyzy_rscjhb_whb(pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg)
   select pfphdm, ksrq, jsrq , jhcl_avg, jhpc_avg
@@ -216,6 +215,6 @@ BEGIN ATOMIC
   
 END LB_MAIN;
 
-COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_GP(date) IS 'ÈÕÉú²ú¼Æ»® ¹£Ë¿ÅòÕÍÆ¬¼ÆËã';
+COMMENT ON PROCEDURE YYZY.P_YYZY_RSCJH_GP(date) IS 'æ—¥ç”Ÿäº§è®¡åˆ’ æ¢—ä¸è†¨èƒ€ç‰‡è®¡ç®—';
 
 GRANT EXECUTE ON PROCEDURE YYZY.P_YYZY_RSCJH_GP (date) TO USER APPUSR;
